@@ -14,14 +14,19 @@
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
-Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
+// Controlling constants
+
+const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
+
+const int FORWARD_POWER = 100; // 0...255
+const int TURN_POWER = 100; // 0...255
 
 
-const int averagingDuration = 10; //This is the inverse of the main loop time
-
+// Pin setup (must match hardware)
 const byte leftSensorPin  = A0;
 const byte rightSensorPin = A1;
 
+Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 Adafruit_DCMotor *leftMotor  = AFMS.getMotor(1);
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
@@ -56,12 +61,14 @@ void loop()
 
 	// Every (configurable) milliseconds, average together the readings recieved and transmit them
 	long time = millis();
-	if (time - lastActionTime > averagingDuration){
+	if (time - lastActionTime > LOOP_DURATION) {
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
 
-		writeSerial(leftAvg, rightAvg);
 
+		lineFollowBang(leftAvg, rightAvg);		
+
+		// Reset counting variables
 		lastActionTime = time;
 		totalRight = totalLeft = 0;
 		count = 0;
@@ -69,19 +76,48 @@ void loop()
 	}
 }
 
-void writeSerial(float leftAvg, float rightAvg)
+// Implements non-blocking bang-bang control of motors.
+void lineFollowBang(float leftAvg, float rightAvg)
 {
-	Serial.print(leftAvg);
-	Serial.print(",");
-	Serial.print(rightAvg);
-	Serial.print("\n");
+	float error = lineOffset(leftAvg, rightAvg);
+
+	// whether the robot will turn right or left (positive is right)
+	// Notice negation of error value for negative feedback behavior
+	float turnFactor = error > 0 ? -1 : 1;
+
+	int leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
+	int rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
+
+	driveMotors(leftPower, rightPower);
 }
+
+// Returns the estimated offset of the robot from the line, with 
+// positive values indicating that the robot is right of the line
+// and negative values indicating the robot is left of the line.
+// Inputs are raw readings from left and right sensors, 0...1023
+//
+// Currently the returned value is dimensionless, and
+// represents only the data derivable from the immediate sensor
+// readings.
+float lineOffset(float leftAvg, float rightAvg)
+{
+	return rightAvg - leftAvg;
+}
+
+// void writeSerial(float leftAvg, float rightAvg)
+// {
+// 	Serial.print(leftAvg);
+// 	Serial.print(",");
+// 	Serial.print(rightAvg);
+// 	Serial.print("\n");
+// }
 
 void driveMotors(int leftPower, int rightPower){
 	// Inputs leftPower and rightPower vary from -255...255
 	// Code in this function is based on https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/using-dc-motors
 
 	// For each motor, decide whether to run it FORWARD, BACKWARD, (or RELEASE)
+	// These are ternary operators, returning FORWARD if power > 0 and backward otherwise.
 	byte leftDirection	= (leftPower  > 0) ? FORWARD : BACKWARD;
 	byte rightDirection	= (rightPower > 0) ? FORWARD : BACKWARD;
 	
