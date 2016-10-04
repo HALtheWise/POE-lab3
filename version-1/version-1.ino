@@ -88,7 +88,23 @@ void lineFollowBang(float leftAvg, float rightAvg)
 	int leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
 	int rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
 
+	normalizePowers(&leftPower, &rightPower, 255)
+
 	driveMotors(leftPower, rightPower);
+}
+
+// normalizePowers ensures that 
+// abs(left) < limit and abs(right) < limit
+// while maintaining their ratio.
+// Useful for constraining desired speeds to be
+// achievable by the motors.
+void normalizePowers(int *left, int *right, int limit){
+	int maxabs = max(abs(*left), abs(*right))
+	if(maxabs > limit)
+	{
+	    *left = *left * (limit / maxabs)
+	    *right = *right * (limit / maxabs)
+	}
 }
 
 // Returns the estimated offset of the robot from the line, with 
