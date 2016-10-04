@@ -14,6 +14,8 @@
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
+#include <PID_v1.h>
+
 // Controlling constants
 
 const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
@@ -30,8 +32,14 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *leftMotor  = AFMS.getMotor(1);
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
-
+// Global variable setup (things that change each loop)
 long lastActionTime;
+
+// Setup PID controller
+double PIDerror=0, PIDsetpoint=0, PIDoutput;
+double kp=1,ki=0,kd=0;
+
+PID pid(&PIDerror, &PIDoutput, &PIDsetpoint, kp, ki, kd, DIRECT);
 
 void setup()
 {
@@ -43,6 +51,7 @@ void setup()
 	// Note that the analog sensors don't need initialization
 	AFMS.begin();
 
+	pid.SetMode(AUTOMATIC);
 }
 
 long totalLeft = 0;
@@ -66,7 +75,7 @@ void loop()
 		float rightAvg = float(totalRight) / count;
 
 
-		lineFollowBang(leftAvg, rightAvg);		
+		lineFollowPid(leftAvg, rightAvg);		
 
 		// Reset counting variables
 		lastActionTime = time;
@@ -77,18 +86,20 @@ void loop()
 }
 
 // Implements non-blocking bang-bang control of motors.
-void lineFollowBang(float leftAvg, float rightAvg)
+void lineFollowPid(float leftAvg, float rightAvg)
 {
 	float error = lineOffset(leftAvg, rightAvg);
+	PIDerror = error;
+
+	pid.Compute();
 
 	// whether the robot will turn right or left (positive is right)
-	// Notice negation of error value for negative feedback behavior
-	float turnFactor = error > 0 ? -1 : 1;
+	float turnFactor = PIDoutput;
 
 	int leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
 	int rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
 
-	normalizePowers(&leftPower, &rightPower, 255)
+	normalizePowers(&leftPower, &rightPower, 255);
 
 	driveMotors(leftPower, rightPower);
 }
@@ -99,11 +110,11 @@ void lineFollowBang(float leftAvg, float rightAvg)
 // Useful for constraining desired speeds to be
 // achievable by the motors.
 void normalizePowers(int *left, int *right, int limit){
-	int maxabs = max(abs(*left), abs(*right))
+	int maxabs = max(abs(*left), abs(*right));
 	if(maxabs > limit)
 	{
-	    *left = *left * (limit / maxabs)
-	    *right = *right * (limit / maxabs)
+	    *left = *left * (limit / maxabs);
+	    *right = *right * (limit / maxabs);
 	}
 }
 
