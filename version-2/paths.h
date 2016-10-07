@@ -35,3 +35,35 @@ byte PathPoint::getSpeed( void ){
 void PathPoint::setSpeed( byte speed ){
 	flags = (flags & 0xf1) | (speed << 1);
 }
+
+
+
+class Path
+{
+public:
+	Path();
+
+	PathPoint points[100];
+	const int numPoints = 100;
+
+	void writeOut( void );
+};
+
+Path::Path(){
+	for (int i = 0; i < numPoints; ++i)
+	{
+		points[i] = PathPoint();
+	}
+}
+
+void Path::writeOut(){
+	for (int i = 0; i < numPoints; ++i)
+	{
+		Serial.print(i);
+		Serial.print("\t");
+		Serial.print(points[i].flags, BIN);
+		Serial.print("\t");
+		Serial.print(points[i].wrappedAngle);
+		Serial.println();
+	}
+}
