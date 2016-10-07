@@ -7,6 +7,14 @@
 #include <QGraphicsEllipseItem>
 #include <QGraphicsScene>
 
+/*
+class RobotBody : public QGraphicsRectItem{
+public:
+    RobotBody();
+
+};
+*/
+
 class Robot
 {
 
@@ -26,12 +34,13 @@ public:
 
 
 public:
-    Robot(QGraphicsScene& scene, QPointF pos=QPointF(128,128), float theta=0.0, float l_1=1.0, float l_2=1.0, float h=0.5, float fov=M_PI/4);
+    Robot(QGraphicsScene& scene, QPointF pos=QPointF(256,256), float theta=0.0, float l_1=10., float l_2=5.0, float h=2.0, float fov=M_PI/4);
 
     void draw();
     void reset(QPointF pos, float theta);
     void move(float delta, float dtheta);
-    void sense();
+    void sense(QImage& img);
+    void setVisible(bool visible);
     float coneRadius();
 };
 

@@ -6,16 +6,19 @@
 #include <QGraphicsPolygonItem>
 
 #include <QKeyEvent>
+#include <QImage>
+#include <QRgb>
+
+QImage image(512,512,QImage::Format_ARGB32);
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    scene(new QGraphicsScene(this)),
+    scene(new QGraphicsScene(0,0,512,512,this)),
     robot(scene),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     ui->graphicsView->setScene(&scene);
-
 
     connect(ui->resetRobotBtn, SIGNAL (released()), this, SLOT (resetRobot()));
     connect(ui->resetRouteBtn, SIGNAL (released()), this, SLOT (resetRoute()));
@@ -48,37 +51,34 @@ void MainWindow::resetRoute(){
 void MainWindow::resetRobot(){
     // not implemented yet
     // put robot on the path
-    // and give it tangent heading to path
+    // and give it heading tangent to path
 }
 
 
 void MainWindow::senseRobot(){
-    QPixmap pixmap;
-    QPainter painter(&pixmap);
+    std::cout << "SENSEROBOT " << std::endl;
+    QPainter painter(&image);
     painter.setRenderHint(QPainter::Antialiasing);
-    scene.render(&painter);
+    image.fill(Qt::white);
+    QRectF area(0,0,512,512);
+    robot.setVisible(false);
+    scene.render(&painter,area,area);
+    robot.setVisible(true);
+
     painter.end();
 
-
-    QImage monomap = pixmap.toImage().convertToFormat(QImage::Format_Mono);
-    int cR = robot.coneRadius();
-    for(int offsetX = -cR; offsetX < cR; ++offsetX){
-        for(int offsetY = -cR; offsetX < cR; ++offsetX){
-            QPointF offset(offsetX, offsetY);
-            QRgb col = monomap.pixel((robot.pos + offset).toPoint());
-            std::cout << col << std::endl;
-        }
-    }
+    robot.sense(image);
+    image.save("WTF.png");
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event){
 
     switch(event->key()){
     case Qt::Key_Up:
-        robot.move(-1.0,0.0);
+        robot.move(1.0,0.0);
         break;
     case Qt::Key_Down:
-        robot.move(1.0,0.0);
+        robot.move(-1.0,0.0);
         break;
     case Qt::Key_Left:
         robot.move(0.0,1.0);

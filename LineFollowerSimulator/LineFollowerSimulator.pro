@@ -16,11 +16,13 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     arduino.cpp \
     route.cpp \
-    robot.cpp
+    robot.cpp \
+    utils.cpp
 
 HEADERS  += mainwindow.h \
     arduino.h \
     route.h \
-    robot.h
+    robot.h \
+    utils.h
 
 FORMS    += mainwindow.ui

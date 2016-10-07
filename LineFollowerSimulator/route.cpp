@@ -2,8 +2,8 @@
 #include <random>
 #include <iostream>
 
-const double R_MIN = 32;
-const double R_MAX = 128;
+const double R_MIN = 64;
+const double R_MAX = 256;
 
 
 Route::Route()
