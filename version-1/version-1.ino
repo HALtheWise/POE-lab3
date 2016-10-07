@@ -52,6 +52,7 @@ void setup()
 	AFMS.begin();
 
 	pid.SetMode(AUTOMATIC);
+	pid.SetSampleTime(LOOP_DURATION);
 }
 
 long totalLeft = 0;
@@ -60,6 +61,8 @@ int count = 0;
 
 void loop()
 {
+	handleIncomingSerial();
+
 	int leftRead = 0;
 	int rightRead = 0;
 	getMeasurements(&leftRead, &rightRead);
@@ -78,10 +81,12 @@ void loop()
 		lineFollowPid(leftAvg, rightAvg);		
 
 		// Reset counting variables
-		lastActionTime = time;
 		totalRight = totalLeft = 0;
 		count = 0;
 
+		// This formulation attempts to ensure average loop duration is LOOP_DURATION,
+		// without causing hyperactive behavior if something blocks for a while.
+		lastActionTime = lastActionTime + LOOP_DURATION*int((time-lastActionTime) / LOOP_DURATION);
 	}
 }
 
@@ -131,13 +136,40 @@ float lineOffset(float leftAvg, float rightAvg)
 	return rightAvg - leftAvg;
 }
 
-// void writeSerial(float leftAvg, float rightAvg)
-// {
-// 	Serial.print(leftAvg);
-// 	Serial.print(",");
-// 	Serial.print(rightAvg);
-// 	Serial.print("\n");
-// }
+void handleIncomingSerial()
+{
+	if(Serial.available() > 0){
+
+		Serial.setTimeout(100);
+		// Read first number from serial stream
+		kp = Serial.parseFloat();
+		Serial.read();
+		ki = Serial.parseFloat();
+		Serial.read();
+		kd = Serial.parseFloat();
+		Serial.read();
+
+		// Ingest remainder of serial buffer in case something went wrong
+		while(Serial.available()){
+		    Serial.read();
+		}
+
+		pid.SetTunings(kp, ki, kd);
+		writeSerial();
+	}
+}
+
+void writeSerial()
+{
+	Serial.println("Tunings set to (kp, ki, kd) = ");
+	Serial.print("\t(");
+	Serial.print(kp);
+	Serial.print(", ");
+	Serial.print(ki);
+	Serial.print(", ");
+	Serial.print(kd);
+	Serial.print(")\n");
+}
 
 void driveMotors(int leftPower, int rightPower){
 	// Inputs leftPower and rightPower vary from -255...255
