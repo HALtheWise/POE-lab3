@@ -1,8 +1,6 @@
 /* 
 *	Version 1 Arduino code for Lab 3 of POE Fall 2016 as taught at Olin College
-*	This code demonstrates reading the sensor values and controlling the motors
-*	using a trivial bang-bang control scheme. 
-*	This is not intended to be final code, but merely a proof of concept.
+*	This code attempts to follow the line while recording (and being able to play back) a motion path.
 *
 *	Authors: Eric Miller (eric@legoaces.org) and Jamie Cho (yoonyoung.cho@students.olin.edu)
 */
@@ -38,6 +36,8 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 // Global variable setup (things that change each loop)
 long lastActionTime;
+// Power levels range -255...255
+int leftPower = 0, rightPower = 0;
 
 // Setup PID controller
 double PIDerror=0, PIDsetpoint=0, PIDoutput;
@@ -75,12 +75,11 @@ void loop()
 	totalRight += rightRead;
 	count++;
 
-	// Every (configurable) milliseconds, average together the readings recieved and transmit them
+	// Every (configurable) milliseconds, average together the readings recieved and handle them
 	long time = millis();
 	if (time - lastActionTime > LOOP_DURATION) {
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
-
 
 		lineFollowPid(leftAvg, rightAvg);		
 
@@ -105,12 +104,12 @@ void lineFollowPid(float leftAvg, float rightAvg)
 	// whether the robot will turn right or left (positive is right)
 	float turnFactor = PIDoutput;
 
-	int leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
-	int rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
+	leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
+	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
 
 	normalizePowers(&leftPower, &rightPower, 255);
 
-	driveMotors(leftPower, rightPower);
+	driveMotors();
 }
 
 // normalizePowers ensures that 
@@ -175,7 +174,7 @@ void writeSerial()
 	Serial.print(")\n");
 }
 
-void driveMotors(int leftPower, int rightPower){
+void driveMotors(){
 	// Inputs leftPower and rightPower vary from -255...255
 	// Code in this function is based on https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/using-dc-motors
 

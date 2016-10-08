@@ -18,6 +18,7 @@ public:
 
 PathPoint::PathPoint( void ){
 	flags = 0x0e; // Full speed, on line
+	wrappedAngle = 0;
 }
 
 bool PathPoint::getOffLine( void ){
@@ -61,7 +62,9 @@ void Path::writeOut(){
 	{
 		Serial.print(i);
 		Serial.print("\t");
-		Serial.print(points[i].flags, BIN);
+		Serial.print(points[i].getSpeed(), BIN);
+		Serial.print("\t");
+		Serial.print(points[i].getOffLine(), BIN);
 		Serial.print("\t");
 		Serial.print(points[i].wrappedAngle);
 		Serial.println();
