@@ -18,6 +18,7 @@
 
 // Include path management code
 #include "paths.h"
+#include "odometry.h"
 
 // Controlling constants
 
