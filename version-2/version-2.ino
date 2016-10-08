@@ -1,6 +1,6 @@
 /* 
 *	Version 1 Arduino code for Lab 3 of POE Fall 2016 as taught at Olin College
-*	This code attempts to follow the line while recording (and being able to play back) a motion path.
+*	This code attempts to follow the line while recording (and eventually being able to play back) a motion path.
 *
 *	Authors: Eric Miller (eric@legoaces.org) and Jamie Cho (yoonyoung.cho@students.olin.edu)
 */
@@ -20,7 +20,7 @@
 
 // Controlling constants
 
-const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
+const int LOOP_DURATION = 20; //(ms) This is the inverse of the main loop frequency
 
 const int FORWARD_POWER = 100; // 0...255
 const int TURN_POWER = 100; // 0...255
@@ -38,6 +38,8 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 long lastActionTime;
 // Power levels range -255...255
 int leftPower = 0, rightPower = 0;
+
+Pose robotPose;
 
 // Setup PID controller
 double PIDerror=0, PIDsetpoint=0, PIDoutput;
@@ -76,12 +78,17 @@ void loop()
 	count++;
 
 	// Every (configurable) milliseconds, average together the readings recieved and handle them
-	long time = millis();
-	if (time - lastActionTime > LOOP_DURATION) {
+	int dt = millis() - lastActionTime;
+
+	if (dt > LOOP_DURATION) {
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
 
-		lineFollowPid(leftAvg, rightAvg);		
+		lineFollowPid(leftAvg, rightAvg);
+
+		robotPose.odometryUpdate(leftPower, rightPower, dt);
+
+		writePoseSerial();
 
 		// Reset counting variables
 		totalRight = totalLeft = 0;
@@ -89,7 +96,7 @@ void loop()
 
 		// This formulation attempts to ensure average loop duration is LOOP_DURATION,
 		// without causing hyperactive behavior if something blocks for a while.
-		lastActionTime = lastActionTime + LOOP_DURATION*int((time-lastActionTime) / LOOP_DURATION);
+		lastActionTime = lastActionTime + LOOP_DURATION*int(dt / LOOP_DURATION);
 	}
 }
 
@@ -158,11 +165,17 @@ void handleIncomingSerial()
 		}
 
 		pid.SetTunings(kp, ki, kd);
-		writeSerial();
+		writeTuningsSerial();
 	}
 }
 
-void writeSerial()
+void writePoseSerial(){
+	Serial.print("Pose is: \t");
+	robotPose.writeOut();
+	Serial.println();
+}
+
+void writeTuningsSerial()
 {
 	Serial.println("Tunings set to (kp, ki, kd) = ");
 	Serial.print("\t(");
