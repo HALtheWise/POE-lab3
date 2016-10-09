@@ -25,3 +25,7 @@ void RobotItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
     painter->drawEllipse(irOffset,cr,cr);
 
 }
+
+void RobotItem::setCR(float cr){
+    this->cr = cr;
+}

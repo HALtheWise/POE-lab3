@@ -125,3 +125,9 @@ void MainWindow::resetPower(){
     ui->l_pow_slider->setValue(0);
     ui->r_pow_slider->setValue(0);
 }
+
+
+void MainWindow::setIRHeight(int h){
+    robot.setIRHeight(h / 10.0); // scaling factor for slider
+}
+

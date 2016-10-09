@@ -13,6 +13,10 @@ std::ostream& operator<<(std::ostream& os, QPointF p){
     return os;
 }
 
+float coneRadius(float h, float fov){
+    return h*tan(fov/2);
+}
+
 // RobotBody
 Robot::Robot(QGraphicsScene& scene, QPointF pos, float theta, QPointF irOffset, float h, float fov):
     pos(pos),
@@ -20,7 +24,7 @@ Robot::Robot(QGraphicsScene& scene, QPointF pos, float theta, QPointF irOffset, 
     irOffset(irOffset),
     h(h),
     fov(fov),
-    cr(h*tan(fov/2))
+    cr(coneRadius(h,fov))
 {
     vel_l = vel_r = 0.;
 
@@ -100,6 +104,12 @@ void Robot::setVelocity(float l, float r){
     setVelocityR(r);
 }
 
+void Robot::setIRHeight(float h){
+    this->h = h;
+    this->cr = coneRadius(h,fov);
+    body->setCR(this->cr);
+}
+
 void Robot::sense(QImage& image){
 
     float l_1 = irOffset.x();
@@ -109,7 +119,7 @@ void Robot::sense(QImage& image){
     QPointF ir_l = ir_root - QPointF(l_2 * sin(theta), l_2 * cos(theta));
     QPointF ir_r = ir_root + QPointF(l_2 * sin(theta), l_2 * cos(theta));
 
-    float cR = coneRadius();
+    float cR = coneRadius(h,fov);
     int i_cR = round(cR);
 
     int n = 0;
@@ -139,10 +149,6 @@ void Robot::sense(QImage& image){
         ir_val_l = sum_l / n;
         ir_val_r = sum_r / n;
     }
-}
-
-float Robot::coneRadius(){
-    return h*tan(fov/2);
 }
 
 void Robot::setVisible(bool visible){

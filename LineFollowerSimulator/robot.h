@@ -56,10 +56,10 @@ public:
     void setVelocity(float left, float right);
     void setVelocityR(float r);
     void setVelocityL(float l);
+    void setIRHeight(float h);
 
     void sense(QImage& img);
     void setVisible(bool visible);
-    float coneRadius();
 };
 
 #endif // ROBOT_H

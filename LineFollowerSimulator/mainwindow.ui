@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>779</width>
-    <height>634</height>
+    <width>798</width>
+    <height>622</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,8 +57,8 @@
    <widget class="QSplitter" name="splitter">
     <property name="geometry">
      <rect>
-      <x>570</x>
-      <y>160</y>
+      <x>560</x>
+      <y>100</y>
       <width>171</width>
       <height>291</height>
      </rect>
@@ -83,6 +83,12 @@
        </property>
        <property name="orientation">
         <enum>Qt::Vertical</enum>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::TicksBelow</enum>
+       </property>
+       <property name="tickInterval">
+        <number>64</number>
        </property>
       </widget>
       <widget class="QLabel" name="label_8">
@@ -122,6 +128,12 @@
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
+       <property name="tickPosition">
+        <enum>QSlider::TicksAbove</enum>
+       </property>
+       <property name="tickInterval">
+        <number>64</number>
+       </property>
       </widget>
       <widget class="QLabel" name="label_6">
        <property name="text">
@@ -148,41 +160,6 @@
      <property name="text">
       <string>Reset Power</string>
      </property>
-    </widget>
-   </widget>
-   <widget class="QSplitter" name="splitter_7">
-    <property name="geometry">
-     <rect>
-      <x>570</x>
-      <y>480</y>
-      <width>184</width>
-      <height>46</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Vertical</enum>
-    </property>
-    <widget class="QSplitter" name="splitter_5">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <widget class="QLabel" name="label">
-      <property name="text">
-       <string>IR_left</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="ir_left_edit"/>
-    </widget>
-    <widget class="QSplitter" name="splitter_6">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <widget class="QLabel" name="label_9">
-      <property name="text">
-       <string>IR_right</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="ir_right_edit"/>
     </widget>
    </widget>
    <widget class="QSplitter" name="splitter_8">
@@ -214,13 +191,71 @@
      </property>
     </widget>
    </widget>
+   <widget class="QSplitter" name="splitter_10">
+    <property name="geometry">
+     <rect>
+      <x>560</x>
+      <y>410</y>
+      <width>171</width>
+      <height>121</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+    <widget class="QSplitter" name="splitter_7">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QSplitter" name="splitter_5">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>IR_left</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="ir_left_edit"/>
+     </widget>
+     <widget class="QSplitter" name="splitter_6">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QLabel" name="label_9">
+       <property name="text">
+        <string>IR_right</string>
+       </property>
+      </widget>
+      <widget class="QLineEdit" name="ir_right_edit"/>
+     </widget>
+    </widget>
+    <widget class="QSplitter" name="splitter_9">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QSlider" name="verticalSlider">
+      <property name="maximum">
+       <number>50</number>
+      </property>
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_2">
+      <property name="text">
+       <string>IR Height</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>779</width>
+     <width>798</width>
      <height>20</height>
     </rect>
    </property>
@@ -273,8 +308,8 @@
      <y>266</y>
     </hint>
     <hint type="destinationlabel">
-     <x>606</x>
-     <y>426</y>
+     <x>596</x>
+     <y>378</y>
     </hint>
    </hints>
   </connection>
@@ -289,8 +324,8 @@
      <y>266</y>
     </hint>
     <hint type="destinationlabel">
-     <x>694</x>
-     <y>426</y>
+     <x>730</x>
+     <y>378</y>
     </hint>
    </hints>
   </connection>
@@ -333,12 +368,28 @@
    <slot>resetPower()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>728</x>
-     <y>478</y>
+     <x>718</x>
+     <y>427</y>
     </hint>
     <hint type="destinationlabel">
      <x>717</x>
      <y>583</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>verticalSlider</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>setIRHeight(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>704</x>
+     <y>499</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>772</x>
+     <y>497</y>
     </hint>
    </hints>
   </connection>
@@ -347,5 +398,6 @@
   <slot>setLeftPower(int)</slot>
   <slot>setRightPower(int)</slot>
   <slot>resetPower()</slot>
+  <slot>setIRHeight(int)</slot>
  </slots>
 </ui>

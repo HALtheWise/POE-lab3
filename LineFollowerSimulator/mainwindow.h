@@ -40,6 +40,7 @@ public slots:
     void setLeftPower(int);
     void setRightPower(int);
     void resetPower();
+    void setIRHeight(int);
    protected:
     void timerEvent(QTimerEvent *event);
 };

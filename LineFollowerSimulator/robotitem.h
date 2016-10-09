@@ -22,9 +22,10 @@ public:
     QRectF boundingRect() const;
     void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget);
     void setPos(QPointF pos, float theta);
+    void setCR(float cr);
     QPointF irPos_r();
     QPointF irPos_l();
-    void draw();
+
 };
 
 #endif // ROBOTITEM_H
