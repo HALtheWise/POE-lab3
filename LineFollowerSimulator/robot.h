@@ -27,10 +27,13 @@ public:
     float h; // height of IR sensor, inches
     float fov; //field of view of IR sensor, radians
 
+    float ir_val_l; //value of ir reflectance sensors
+    float ir_val_r;
+
     QGraphicsItemGroup* robot;
     QGraphicsEllipseItem *body; //approximation
-    QGraphicsEllipseItem *ir_1; //approximation
-    QGraphicsEllipseItem *ir_2; //approximation
+    QGraphicsEllipseItem *ir_l; //approximation
+    QGraphicsEllipseItem *ir_r; //approximation
 
 
 public:

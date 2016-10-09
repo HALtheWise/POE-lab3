@@ -56,19 +56,21 @@ void MainWindow::resetRobot(){
 
 
 void MainWindow::senseRobot(){
-    std::cout << "SENSEROBOT " << std::endl;
     QPainter painter(&image);
     painter.setRenderHint(QPainter::Antialiasing);
     image.fill(Qt::white);
+
     QRectF area(0,0,512,512);
+
+    // be invisible so that it doesn't detect itself
     robot.setVisible(false);
     scene.render(&painter,area,area);
     robot.setVisible(true);
 
     painter.end();
-
     robot.sense(image);
-    image.save("WTF.png");
+
+    std::cout << "IR VALUE : LEFT {" << robot.ir_val_l << "} , RIGHT {" << robot.ir_val_r << '}' << std::endl;
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event){
@@ -80,12 +82,13 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event){
     case Qt::Key_Down:
         robot.move(-1.0,0.0);
         break;
-    case Qt::Key_Left:
+    case Qt::Key_Left: // rotate counterclockwise
         robot.move(0.0,1.0);
         break;
-    case Qt::Key_Right:
+    case Qt::Key_Right: // rotate clockwise
         robot.move(0.0,-1.0);
         break;
     }
+
     senseRobot();
 }
