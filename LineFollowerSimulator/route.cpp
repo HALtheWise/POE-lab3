@@ -2,8 +2,8 @@
 #include <random>
 #include <iostream>
 
-const double R_MIN = 64;
-const double R_MAX = 256;
+const double R_MIN = PXL_DIMS/8;
+const double R_MAX = PXL_DIMS/2;
 
 
 Route::Route()

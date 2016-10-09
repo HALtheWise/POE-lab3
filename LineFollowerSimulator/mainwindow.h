@@ -6,6 +6,7 @@
 #include <QGraphicsView>
 #include <QGraphicsScene>
 
+#include "utils.h"
 #include "route.h"
 #include "robot.h"
 

@@ -5,55 +5,94 @@
 // 1 pxl = .5 cm
 // 270 x 270 cm world
 
-
 // robot = 20x16 cm
+
+
+std::ostream& operator<<(std::ostream& os, QPointF p){
+    os << "{X : " << p.x() << ", Y : " << p.y() << "}";
+}
 
 float voltageToRPM(float v){
     // converts voltage to Angular Velocity
     return 0.0;
 }
 
-Robot::Robot(QGraphicsScene& scene, QPointF pos, float theta, float l_1, float l_2, float h, float fov):
-    pos(pos),theta(theta),l_1(l_1),l_2(l_2),h(h),fov(fov)
+// RobotBody
+Robot::Robot(QGraphicsScene& scene, QPointF pos, float theta, QPointF irOffset, float h, float fov):
+    pos(pos),
+    theta(theta),
+    irOffset(irOffset),
+    h(h),
+    fov(fov),
+    cr(h*tan(fov/2))
 {
-    //ir_l = QGraphicsEllipseItem();
-    //ir_r = QGraphicsEllipseItem();
-    //body = QGraphicsEllipseItem();
+    vel_l = vel_r = 0.;
 
-    ir_l = scene.addEllipse(0,0,0,0);
-    ir_r = scene.addEllipse(0,0,0,0);
-    body = scene.addEllipse(0,0,0,0);
+    body = new RobotItem(pos,QPointF(ROBOT_LENGTH,ROBOT_WIDTH),irOffset, theta, cr);
+    scene.addItem(body);
 
-    QList<QGraphicsItem*> items({body,ir_l, ir_r});
+    //ir_l = scene.addEllipse(0,0,0,0);
+    //ir_r = scene.addEllipse(0,0,0,0);
+    //body = scene.addRect(0,0,ROBOT_WIDTH,ROBOT_LENGTH);
 
-    robot = scene.createItemGroup(items);
+    //QList<QGraphicsItem*> items({body,ir_l, ir_r});
+
+    //robot = scene.createItemGroup(items);
+}
+
+Robot::~Robot(){
+    delete body;
 }
 
 void Robot::reset(QPointF p, float t){
     pos=p; theta=t;
+    body->setPos(pos,theta);
 }
 
 void Robot::move(float delta, float dtheta){
-    theta += dtheta;
-    pos += QPointF(delta * cos(theta), delta * -sin(theta));
+    theta += dtheta * DT;
+    pos += delta * QPointF(cos(theta), -sin(theta)) * DT;
+    update();
+}
 
-    QPointF ir_root_pos = pos + QPointF(l_1 * cos(theta), -l_1 * sin(theta));
-    QPointF ir_l_pos = ir_root_pos + QPointF(l_2 * sin(theta), l_2 * cos(theta));
-    QPointF ir_r_pos = ir_root_pos - QPointF(l_2 * sin(theta), l_2 * cos(theta));
+void Robot::update(){
+    float w = (vel_l - vel_r) / WHEEL_DISTANCE;
+    float R = (vel_l + vel_r) / (2*w);
 
-    //body->setRect(0,0,0,0);
+    QPointF ICC = pos + R * QPointF(-sin(theta), -cos(theta));
+    std::cout << ICC << std::endl;
 
-    body->setRect(pos.x() - 10.0, pos.y() - 10.0, 20.0, 20.0);
-    ir_l->setRect(ir_l_pos.x() -2.5,ir_l_pos.y() - 2.5,5.0,5.0);
-    ir_r->setRect(ir_r_pos.x() -2.5 ,ir_r_pos.y() - 2.5 ,5.0,5.0);
+    float x = pos.x();
+    float y = pos.y();
 
+    pos.setX(
+                cos(w*DT) * (x - ICC.x()) +
+                -sin(w*DT) * (y - ICC.y()) +
+                ICC.x()
+                );
+    pos.setY(
+                sin(w*DT) * (x - ICC.x()) +
+                cos(w*DT) * (y - ICC.y()) +
+                ICC.y()
+                );
+    theta += w * DT;
+
+    body->setPos(pos, theta);
+}
+
+void Robot::setVelocity(float left, float right){
+    vel_l = left, vel_r = right;
+    update();
 }
 
 void Robot::sense(QImage& image){
+
+    float l_1 = irOffset.x();
+    float l_2 = irOffset.y();
+
     QPointF ir_root = pos + QPointF(l_1 * cos(theta), -l_1 * sin(theta));
-    QPointF ir_l = ir_root + QPointF(l_2 * sin(theta), l_2 * cos(theta));
-    QPointF ir_r = ir_root - QPointF(l_2 * sin(theta), l_2 * cos(theta));
-    std::cout << "ROBOT POSITION : " << pos.x() << ',' << pos.y() << std::endl;
+    QPointF ir_l = ir_root - QPointF(l_2 * sin(theta), l_2 * cos(theta));
+    QPointF ir_r = ir_root + QPointF(l_2 * sin(theta), l_2 * cos(theta));
 
     float cR = coneRadius();
     int i_cR = round(cR);
@@ -63,7 +102,6 @@ void Robot::sense(QImage& image){
     float sum_l=0;
     float sum_r = 0;
 
-    std::cout << "i_CR : " << i_cR << std::endl;
     for(int offsetX = -i_cR; offsetX <= i_cR; ++offsetX){
         for(int offsetY = -i_cR; offsetY <= i_cR; ++offsetY){
             if((offsetX * offsetX + offsetY * offsetY) < (cR * cR)){
@@ -94,7 +132,7 @@ float Robot::coneRadius(){
 }
 
 void Robot::setVisible(bool visible){
-    ir_l->setVisible(visible);
-    ir_r->setVisible(visible);
+    //ir_l->setVisible(visible);
+    //ir_r->setVisible(visible);
     body->setVisible(visible);
 }

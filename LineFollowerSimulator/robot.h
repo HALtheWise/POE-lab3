@@ -4,16 +4,14 @@
 #include <QObject>
 #include <QPointF>
 
+#include <QGraphicsRectItem>
 #include <QGraphicsEllipseItem>
+
 #include <QGraphicsScene>
 
-/*
-class RobotBody : public QGraphicsRectItem{
-public:
-    RobotBody();
+#include "utils.h"
+#include "robotitem.h"
 
-};
-*/
 
 class Robot
 {
@@ -22,26 +20,37 @@ public:
     QPointF pos; // current position
     float theta; // heading, measured from horz.  radians
 
-    float l_1; // vertical offset of IR sensor, inches
-    float l_2; // horizontal offset of IR sensor, inches
+    QPointF irOffset;
+
+    float vel_l, vel_r;
+
     float h; // height of IR sensor, inches
     float fov; //field of view of IR sensor, radians
 
     float ir_val_l; //value of ir reflectance sensors
     float ir_val_r;
 
-    QGraphicsItemGroup* robot;
-    QGraphicsEllipseItem *body; //approximation
-    QGraphicsEllipseItem *ir_l; //approximation
-    QGraphicsEllipseItem *ir_r; //approximation
+    // frequently computed values
+    float cr; //cone radius
 
+    RobotItem* body;
+
+    //QGraphicsItemGroup* robot;
+    //QGraphicsRectItem *body; //approximation
+    //QGraphicsEllipseItem *ir_l; //approximation
+    //QGraphicsEllipseItem *ir_r; //approximation
 
 public:
-    Robot(QGraphicsScene& scene, QPointF pos=QPointF(256,256), float theta=0.0, float l_1=10., float l_2=5.0, float h=2.0, float fov=M_PI/4);
+    Robot(QGraphicsScene& scene,
+          QPointF pos, float theta,
+          QPointF irOffset, float h, float fov);
+    ~Robot();
 
     void draw();
     void reset(QPointF pos, float theta);
+    void update();
     void move(float delta, float dtheta);
+    void setVelocity(float left, float right);
     void sense(QImage& img);
     void setVisible(bool visible);
     float coneRadius();

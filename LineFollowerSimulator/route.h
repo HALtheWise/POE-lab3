@@ -7,6 +7,8 @@
 #include <QGraphicsPolygonItem>
 #include <QPen>
 
+#include "utils.h"
+
 struct Route
 {
     QVector<QPointF> route;

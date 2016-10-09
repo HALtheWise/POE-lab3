@@ -9,12 +9,12 @@
 #include <QImage>
 #include <QRgb>
 
-QImage image(512,512,QImage::Format_ARGB32);
+QImage image(PXL_DIMS,PXL_DIMS,QImage::Format_ARGB32);
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    scene(new QGraphicsScene(0,0,512,512,this)),
-    robot(scene),
+    scene(new QGraphicsScene(0,0,PXL_DIMS,PXL_DIMS,this)),
+    robot(scene, QPointF(PXL_DIMS/2,PXL_DIMS/2),0.0, QPointF(IR_OFFSETX, IR_OFFSETY), IR_HEIGHT, IR_FOV),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
@@ -60,7 +60,7 @@ void MainWindow::senseRobot(){
     painter.setRenderHint(QPainter::Antialiasing);
     image.fill(Qt::white);
 
-    QRectF area(0,0,512,512);
+    QRectF area(0,0,PXL_DIMS,PXL_DIMS);
 
     // be invisible so that it doesn't detect itself
     robot.setVisible(false);
@@ -75,18 +75,21 @@ void MainWindow::senseRobot(){
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event){
 
+    //key teleop for testing
+
     switch(event->key()){
     case Qt::Key_Up:
-        robot.move(1.0,0.0);
+        robot.setVelocity(-0.1,0.0);
+        //robot.move(1.0,0.0);
         break;
     case Qt::Key_Down:
-        robot.move(-1.0,0.0);
+        robot.setVelocity(0.1,0.0);
         break;
     case Qt::Key_Left: // rotate counterclockwise
-        robot.move(0.0,1.0);
+        robot.setVelocity(0.0,-0.1);
         break;
     case Qt::Key_Right: // rotate clockwise
-        robot.move(0.0,-1.0);
+        robot.setVelocity(0.0,0.1);
         break;
     }
 
