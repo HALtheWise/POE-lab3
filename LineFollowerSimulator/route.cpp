@@ -8,7 +8,7 @@ const double R_MAX = PXL_DIMS/2;
 
 Route::Route()
 {
-    auto routeBrush = QBrush(QColor::fromRgb(0,0,0),Qt::SolidPattern);
+    QBrush routeBrush = QBrush(QColor::fromRgb(0,0,0),Qt::SolidPattern);
     routePen = QPen(routeBrush, c2p(1.7));
 }
 

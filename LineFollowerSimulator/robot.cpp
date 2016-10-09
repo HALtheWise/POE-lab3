@@ -121,11 +121,11 @@ void Robot::sense(QImage& image){
             if((offsetX * offsetX + offsetY * offsetY) < (cR * cR)){
                 QPointF offset(offsetX, offsetY);
 
-                QColor col_l = image.pixelColor((ir_l + offset).toPoint());
-                QColor col_r = image.pixelColor((ir_r + offset).toPoint());
+                QRgb col_l = image.pixel((ir_l + offset).toPoint());
+                QRgb col_r = image.pixel((ir_r + offset).toPoint());
 
-                sum_l += col_l.redF();
-                sum_r += col_r.redF();
+                sum_l += qGray(col_l) / 255.0;
+                sum_r += qGray(col_r) / 255.0;
                 ++n;
 
 
