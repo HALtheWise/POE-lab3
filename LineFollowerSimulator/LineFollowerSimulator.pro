@@ -28,3 +28,5 @@ HEADERS  += mainwindow.h \
     robotitem.h
 
 FORMS    += mainwindow.ui
+
+CONFIG += c++11
