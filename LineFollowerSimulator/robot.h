@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QPointF>
 
+#include <QPolygonF>
+
 #include <QGraphicsRectItem>
 #include <QGraphicsEllipseItem>
 
@@ -47,6 +49,8 @@ public:
     ~Robot();
 
     void reset(QPointF pos, float theta);
+    void reset(QPolygonF route);
+
     void update();
     void move(float delta, float dtheta);
     void setVelocity(float left, float right);

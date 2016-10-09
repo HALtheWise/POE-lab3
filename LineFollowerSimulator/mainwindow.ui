@@ -54,38 +54,6 @@
      <string>Reset Robot Location</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="resetRouteBtn">
-    <property name="geometry">
-     <rect>
-      <x>580</x>
-      <y>60</y>
-      <width>80</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Reset Route</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="routePointsEdit">
-    <property name="geometry">
-     <rect>
-      <x>580</x>
-      <y>90</y>
-      <width>113</width>
-      <height>23</height>
-     </rect>
-    </property>
-    <property name="toolTip">
-     <string>Must be Greater than 3.</string>
-    </property>
-    <property name="placeholderText">
-     <string>Number of Points</string>
-    </property>
-    <property name="clearButtonEnabled">
-     <bool>false</bool>
-    </property>
-   </widget>
    <widget class="QSplitter" name="splitter">
     <property name="geometry">
      <rect>
@@ -215,6 +183,35 @@
       </property>
      </widget>
      <widget class="QLineEdit" name="ir_right_edit"/>
+    </widget>
+   </widget>
+   <widget class="QSplitter" name="splitter_8">
+    <property name="geometry">
+     <rect>
+      <x>580</x>
+      <y>60</y>
+      <width>129</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+    <widget class="QPushButton" name="resetRouteBtn">
+     <property name="text">
+      <string>Reset Route</string>
+     </property>
+    </widget>
+    <widget class="QSpinBox" name="n_routes_spin">
+     <property name="minimum">
+      <number>4</number>
+     </property>
+     <property name="maximum">
+      <number>32</number>
+     </property>
+     <property name="value">
+      <number>16</number>
+     </property>
     </widget>
    </widget>
   </widget>

@@ -26,6 +26,7 @@ void Route::reset(int n){
     std::cout << "N : " << n << " ROUTE SIZE : " << route.size() << std::endl;
 
     poly = QPolygonF(route);
+
     poly_item.setPolygon(poly);
     poly_item.setPen(routePen);
 }

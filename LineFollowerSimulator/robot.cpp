@@ -37,6 +37,15 @@ void Robot::reset(QPointF p, float t){
     body->setPos(pos,theta);
 }
 
+void Robot::reset(QPolygonF route){
+    pos = route.front();
+    float dst_x = route[1].x();
+    float dst_y = route[1].y();
+
+    theta = atan2(pos.y() - dst_y,dst_x - pos.x());
+
+}
+
 void Robot::move(float delta, float dtheta){
     theta += dtheta * DT;
     pos += delta * QPointF(cos(theta), -sin(theta)) * DT;

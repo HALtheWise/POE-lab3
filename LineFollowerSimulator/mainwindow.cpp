@@ -23,10 +23,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->resetRobotBtn, SIGNAL (released()), this, SLOT (resetRobot()));
     connect(ui->resetRouteBtn, SIGNAL (released()), this, SLOT (resetRoute()));
-    ui->routePointsEdit->setValidator(new QIntValidator(3,100,this));
 
-    resetRobot();
     resetRoute(10);
+    resetRobot();
 
     scene.addItem(&route.poly_item);
 
@@ -47,15 +46,13 @@ void MainWindow::resetRoute(int n){
 }
 
 void MainWindow::resetRoute(){
-    QString s = ui->routePointsEdit->text();
-    int n = s.toInt();
+    int n = ui->n_routes_spin->value();
     resetRoute(n);
+    robot.reset(route.poly);
 }
 
 void MainWindow::resetRobot(){
-    // not implemented yet
-    // put robot on the path
-    // and give it heading tangent to path
+    robot.reset(route.poly);
 }
 
 
