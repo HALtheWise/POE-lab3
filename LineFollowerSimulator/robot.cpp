@@ -10,11 +10,7 @@
 
 std::ostream& operator<<(std::ostream& os, QPointF p){
     os << "{X : " << p.x() << ", Y : " << p.y() << "}";
-}
-
-float voltageToRPM(float v){
-    // converts voltage to Angular Velocity
-    return 0.0;
+    return os;
 }
 
 // RobotBody
@@ -30,14 +26,6 @@ Robot::Robot(QGraphicsScene& scene, QPointF pos, float theta, QPointF irOffset, 
 
     body = new RobotItem(pos,QPointF(ROBOT_LENGTH,ROBOT_WIDTH),irOffset, theta, cr);
     scene.addItem(body);
-
-    //ir_l = scene.addEllipse(0,0,0,0);
-    //ir_r = scene.addEllipse(0,0,0,0);
-    //body = scene.addRect(0,0,ROBOT_WIDTH,ROBOT_LENGTH);
-
-    //QList<QGraphicsItem*> items({body,ir_l, ir_r});
-
-    //robot = scene.createItemGroup(items);
 }
 
 Robot::~Robot(){
@@ -56,33 +44,51 @@ void Robot::move(float delta, float dtheta){
 }
 
 void Robot::update(){
-    float w = (vel_l - vel_r) / WHEEL_DISTANCE;
-    float R = (vel_l + vel_r) / (2*w);
+    float w = (vel_r - vel_l) / WHEEL_DISTANCE;
+    if(w != 0){
+        float R = (vel_l + vel_r) / (2*w);
 
-    QPointF ICC = pos + R * QPointF(-sin(theta), -cos(theta));
-    std::cout << ICC << std::endl;
+        QPointF ICC = pos + R * QPointF(-sin(theta), -cos(theta));
+        // ICC = virtual center of rotation
 
-    float x = pos.x();
-    float y = pos.y();
+        //std::cout << ICC << std::endl;
 
-    pos.setX(
-                cos(w*DT) * (x - ICC.x()) +
-                -sin(w*DT) * (y - ICC.y()) +
-                ICC.x()
-                );
-    pos.setY(
-                sin(w*DT) * (x - ICC.x()) +
-                cos(w*DT) * (y - ICC.y()) +
-                ICC.y()
-                );
-    theta += w * DT;
+        float x = pos.x();
+        float y = pos.y();
+        float iccx = ICC.x();
+        float iccy = ICC.y();
+
+        pos.setX(
+                    cos(-w*DT) * (x - iccx) +
+                    -sin(-w*DT) * (y - iccy) +
+                    iccx
+                    );
+        pos.setY(
+                    sin(-w*DT) * (x - iccx) +
+                    cos(-w*DT) * (y - iccy) +
+                    iccy
+                    );
+        theta += w * DT;
+    }else{
+        // if w == 0, then division by zero would be bad..
+        // since it's a special (and well-defined) case, we should handle this
+        pos += vel_l * QPointF(cos(theta), -sin(theta)) * DT;
+    }
+
 
     body->setPos(pos, theta);
 }
+void Robot::setVelocityL(float v){
+    vel_l = v;
+}
 
-void Robot::setVelocity(float left, float right){
-    vel_l = left, vel_r = right;
-    update();
+void Robot::setVelocityR(float v){
+    vel_r = v;
+}
+
+void Robot::setVelocity(float l, float r){
+    setVelocityL(l);
+    setVelocityR(r);
 }
 
 void Robot::sense(QImage& image){
@@ -97,7 +103,6 @@ void Robot::sense(QImage& image){
     float cR = coneRadius();
     int i_cR = round(cR);
 
-    //std::cout << "Cone RADIUS : " << cR << std::endl;
     int n = 0;
     float sum_l=0;
     float sum_r = 0;
@@ -132,7 +137,5 @@ float Robot::coneRadius(){
 }
 
 void Robot::setVisible(bool visible){
-    //ir_l->setVisible(visible);
-    //ir_r->setVisible(visible);
     body->setVisible(visible);
 }

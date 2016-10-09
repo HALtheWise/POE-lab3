@@ -46,11 +46,13 @@ public:
           QPointF irOffset, float h, float fov);
     ~Robot();
 
-    void draw();
     void reset(QPointF pos, float theta);
     void update();
     void move(float delta, float dtheta);
     void setVelocity(float left, float right);
+    void setVelocityR(float r);
+    void setVelocityL(float l);
+
     void sense(QImage& img);
     void setVisible(bool visible);
     float coneRadius();

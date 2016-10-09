@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "utils.h"
 
 #include <iostream>
 
@@ -28,10 +29,13 @@ MainWindow::MainWindow(QWidget *parent) :
     resetRoute(10);
 
     scene.addItem(&route.poly_item);
+
+    timerId = startTimer(DT * 1000 / SIMULATION_ACCELARATION);// DT in sec
 }
 
 MainWindow::~MainWindow()
 {
+    killTimer(timerId);
     delete ui;
 }
 
@@ -70,7 +74,10 @@ void MainWindow::senseRobot(){
     painter.end();
     robot.sense(image);
 
-    std::cout << "IR VALUE : LEFT {" << robot.ir_val_l << "} , RIGHT {" << robot.ir_val_r << '}' << std::endl;
+    ui->ir_left_edit->setText(QString::number(robot.ir_val_l));
+    ui->ir_right_edit->setText(QString::number(robot.ir_val_r));
+
+    //std::cout << "IR VALUE : LEFT {" << robot.ir_val_l << "} , RIGHT {" << robot.ir_val_r << '}' << std::endl;
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event){
@@ -79,19 +86,45 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event){
 
     switch(event->key()){
     case Qt::Key_Up:
-        robot.setVelocity(-0.1,0.0);
+        //robot.setVelocity(1.0,1.0);
+        ui->l_pow_slider->setValue(ui->l_pow_slider->value() + 1);
         //robot.move(1.0,0.0);
         break;
     case Qt::Key_Down:
-        robot.setVelocity(0.1,0.0);
+        ui->l_pow_slider->setValue(ui->l_pow_slider->value() -  1);
+        //robot.setVelocity(-1.0,-1.0);
         break;
     case Qt::Key_Left: // rotate counterclockwise
-        robot.setVelocity(0.0,-0.1);
+
+        ui->r_pow_slider->setValue(ui->r_pow_slider->value() - 1);
+        //robot.setVelocity(-1.0,1.0);
         break;
     case Qt::Key_Right: // rotate clockwise
-        robot.setVelocity(0.0,0.1);
+        ui->r_pow_slider->setValue(ui->r_pow_slider->value() + 1);
         break;
     }
 
+    //senseRobot();
+}
+
+void MainWindow::timerEvent(QTimerEvent *){
+    robot.update();
     senseRobot();
+}
+
+void MainWindow::setRightPower(int pow){
+    // convert power to velocity
+    // then convert it back to pixel units
+    robot.setVelocityR(c2p(pow2vel(pow)));
+}
+
+void MainWindow::setLeftPower(int pow){
+    // convert power to velocity
+    // then convert it back to pixel units
+    robot.setVelocityL(c2p(pow2vel(pow)));
+}
+
+void MainWindow::resetPower(){
+    ui->l_pow_slider->setValue(0);
+    ui->r_pow_slider->setValue(0);
 }

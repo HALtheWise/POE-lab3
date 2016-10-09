@@ -23,6 +23,7 @@ private:
     Route route;
     Robot robot;
 
+    int timerId;
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -36,6 +37,11 @@ public slots:
     void resetRobot();
     void resetRoute();
     void senseRobot();
+    void setLeftPower(int);
+    void setRightPower(int);
+    void resetPower();
+   protected:
+    void timerEvent(QTimerEvent *event);
 };
 
 #endif // MAINWINDOW_H
