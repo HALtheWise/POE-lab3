@@ -83,18 +83,14 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event){
 
     switch(event->key()){
     case Qt::Key_Up:
-        //robot.setVelocity(1.0,1.0);
         ui->l_pow_slider->setValue(ui->l_pow_slider->value() + 1);
-        //robot.move(1.0,0.0);
         break;
     case Qt::Key_Down:
         ui->l_pow_slider->setValue(ui->l_pow_slider->value() -  1);
-        //robot.setVelocity(-1.0,-1.0);
         break;
     case Qt::Key_Left: // rotate counterclockwise
 
         ui->r_pow_slider->setValue(ui->r_pow_slider->value() - 1);
-        //robot.setVelocity(-1.0,1.0);
         break;
     case Qt::Key_Right: // rotate clockwise
         ui->r_pow_slider->setValue(ui->r_pow_slider->value() + 1);
@@ -128,6 +124,6 @@ void MainWindow::resetPower(){
 
 
 void MainWindow::setIRHeight(int h){
-    robot.setIRHeight(h / 10.0); // scaling factor for slider
+    robot.setIRHeight(c2p(h / 10.0)); // scaling factor for slider
 }
 

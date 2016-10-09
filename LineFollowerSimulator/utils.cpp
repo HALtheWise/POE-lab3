@@ -14,10 +14,10 @@ const float ROBOT_WIDTH = c2p(16);
 
 const float WHEEL_DISTANCE = c2p(13.0);
 
-const float IR_OFFSETX = c2p(5);
-const float IR_OFFSETY = c2p(5);
+const float IR_OFFSETX = c2p(8);
+const float IR_OFFSETY = c2p(4);
 
-const float IR_HEIGHT = c2p(4);
+const float IR_HEIGHT = c2p(2);
 
 const float IR_FOV = d2r(60);
 
