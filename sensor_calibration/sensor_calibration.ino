@@ -10,8 +10,8 @@
 
 const int averagingDuration = 200;
 
-const byte leftSensorPin = A0;
-const byte rightSensorPin = A1;
+const byte leftSensorPin = A1;
+const byte rightSensorPin = A0;
 // const byte leftMotorPin = 9;
 // const byte rightMotorPin = 10;
 
@@ -59,7 +59,7 @@ void loop()
 void writeSerial(float leftAvg, float rightAvg)
 {
 	Serial.print(leftAvg);
-	Serial.print(",");
+	Serial.print(",\t");
 	Serial.print(rightAvg);
 	Serial.print("\n");
 }

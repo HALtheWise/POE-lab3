@@ -18,13 +18,13 @@
 
 const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
 
-const int FORWARD_POWER = 100; // 0...255
-const int TURN_POWER = 100; // 0...255
+const int FORWARD_POWER = 20; // 0...255
+const int TURN_POWER = 20; // 0...255
 
 
 // Pin setup (must match hardware)
-const byte leftSensorPin  = A0;
-const byte rightSensorPin = A1;
+const byte leftSensorPin  = A1;
+const byte rightSensorPin = A0;
 
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 Adafruit_DCMotor *leftMotor  = AFMS.getMotor(1);
@@ -65,6 +65,7 @@ void loop()
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
 
+		Serial.println(lineOffset(leftAvg, rightAvg));
 
 		lineFollowBang(leftAvg, rightAvg);		
 
@@ -101,7 +102,8 @@ void lineFollowBang(float leftAvg, float rightAvg)
 // readings.
 float lineOffset(float leftAvg, float rightAvg)
 {
-	return rightAvg - leftAvg;
+	return map(leftAvg, 780, 880, -100, 100);
+	//return rightAvg - leftAvg;
 }
 
 // void writeSerial(float leftAvg, float rightAvg)
