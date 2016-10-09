@@ -7,11 +7,10 @@ Code and results for Lab 3 of POE at Olin College, Fall 2016
 Jamie :
 
 - [ ] Redesign IR Mounts
-- [ ] Simulator with Higher Fidelity HW Interface
-- [ ] Characterize Motors, Velocity-Voltage
+- [x] Simulator with Higher Fidelity HW Interface
+- [x] Characterize Motors, Velocity-Voltage
 - [ ] Autocalibration
 - [ ] On-Off Switch (might as well be E-STOP)
-- [ ] Build Simulator
 
 Eric :
 
