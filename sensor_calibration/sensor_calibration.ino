@@ -59,7 +59,7 @@ void loop()
 void writeSerial(float leftAvg, float rightAvg)
 {
 	Serial.print(leftAvg);
-	Serial.print(",");
+	Serial.print(",\t");
 	Serial.print(rightAvg);
 	Serial.print("\n");
 }
