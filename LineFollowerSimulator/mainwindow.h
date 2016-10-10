@@ -24,6 +24,7 @@ private:
     Robot robot;
 
     int timerId;
+    bool auto_control; //
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -41,6 +42,7 @@ public slots:
     void setRightPower(int);
     void resetPower();
     void setIRHeight(int);
+    void setAuto(bool);
    protected:
     void timerEvent(QTimerEvent *event);
 };

@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
     robot(scene, QPointF(PXL_DIMS/2,PXL_DIMS/2),0.0, QPointF(IR_OFFSETX, IR_OFFSETY), IR_HEIGHT, IR_FOV),
     ui(new Ui::MainWindow)
 {
+    auto_control = false;
     ui->setupUi(this);
     ui->graphicsView->setScene(&scene);
 
@@ -101,8 +102,24 @@ void MainWindow::keyReleaseEvent(QKeyEvent *event){
 }
 
 void MainWindow::timerEvent(QTimerEvent *){
-    robot.update();
     senseRobot();
+
+    if(auto_control){
+        const int FORWARD_POWER = 20; // 0...255
+        const int TURN_POWER = 20; // 0...255
+
+        float err = robot.ir_val_r - robot.ir_val_l;
+        float turnFactor = err > 0? -1 : 1;
+
+        int leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
+        int rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
+
+        setRightPower (rightPower);
+        setLeftPower (leftPower);
+    }
+
+    robot.update();
+
 }
 
 void MainWindow::setRightPower(int pow){
@@ -120,6 +137,8 @@ void MainWindow::setLeftPower(int pow){
 void MainWindow::resetPower(){
     ui->l_pow_slider->setValue(0);
     ui->r_pow_slider->setValue(0);
+    setLeftPower(0);
+    setRightPower(0);
 }
 
 
@@ -127,3 +146,10 @@ void MainWindow::setIRHeight(int h){
     robot.setIRHeight(c2p(h / 10.0)); // scaling factor for slider
 }
 
+void MainWindow::setAuto(bool a){
+    std::cout << a << std::endl;
+    auto_control = a;
+    if(!a){
+        resetPower();
+    }
+}

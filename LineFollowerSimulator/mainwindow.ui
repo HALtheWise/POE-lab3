@@ -252,6 +252,19 @@
      </widget>
     </widget>
    </widget>
+   <widget class="QCheckBox" name="checkBox">
+    <property name="geometry">
+     <rect>
+      <x>570</x>
+      <y>540</y>
+      <width>85</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Automatic</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -396,11 +409,28 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>checkBox</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>setAuto(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>622</x>
+     <y>591</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>513</x>
+     <y>588</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>setLeftPower(int)</slot>
   <slot>setRightPower(int)</slot>
   <slot>resetPower()</slot>
   <slot>setIRHeight(int)</slot>
+  <slot>setAuto(bool)</slot>
  </slots>
 </ui>
