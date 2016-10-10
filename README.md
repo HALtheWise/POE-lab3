@@ -11,6 +11,7 @@ Jamie :
 - [x] Characterize Motors, Velocity-Voltage
 - [ ] Autocalibration
 - [ ] On-Off Switch (might as well be E-STOP)
+- [ ] Voltage Monitor (differentiate USB vs. Outlet power?)
 
 Eric :
 
