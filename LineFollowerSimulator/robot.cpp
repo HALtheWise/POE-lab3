@@ -8,10 +8,6 @@
 // robot = 20x16 cm
 
 
-std::ostream& operator<<(std::ostream& os, QPointF p){
-    os << "{X : " << p.x() << ", Y : " << p.y() << "}";
-    return os;
-}
 
 float coneRadius(float h, float fov){
     return h*tan(fov/2);

@@ -13,7 +13,7 @@ Route::Route()
 }
 
 void Route::reset(int n){
-    route.clear();
+    QVector<QPointF> route;
 
     float x = R_MAX;
     float y = R_MAX; // at center
@@ -24,13 +24,41 @@ void Route::reset(int n){
         route.push_back(QPointF(x + r*cos(t), y + r*sin(t)));
     }
     std::cout << "N : " << n << " ROUTE SIZE : " << route.size() << std::endl;
+    reset(route);
+}
 
+void Route::reset(const QVector<QPointF> &route){
     poly = QPolygonF(route);
-
     poly_item.setPolygon(poly);
     poly_item.setPen(routePen);
 }
 
-void Route::draw(){
+void Route::save(const QString& filename){
+    QFile file(filename);
+    if (file.open(QIODevice::ReadWrite)) {
+        QTextStream stream(&file);
 
+        for(auto& p : poly){
+            stream << p.x() << ',' << p.y() << '\n';
+        }
+    }
+    file.close();
+}
+
+void Route::load(const QString& filename){
+    QFile file(filename);
+    if(file.open(QIODevice::ReadOnly)) {
+        QTextStream stream(&file);
+        QVector<QPointF> route;
+
+        while(!stream.atEnd()){
+            QString line = stream.readLine();
+            QStringList pt_s = line.split(",");
+            QPointF pt(pt_s[0].toFloat(),pt_s[1].toFloat());
+            route.push_back(pt);
+        }
+
+        file.close();
+        Route::reset(route);
+    }
 }

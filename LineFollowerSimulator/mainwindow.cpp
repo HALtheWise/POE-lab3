@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "utils.h"
+#include "pid.h"
 
 #include <iostream>
 
@@ -11,6 +12,11 @@
 #include <QRgb>
 
 QImage image(PXL_DIMS,PXL_DIMS,QImage::Format_ARGB32);
+
+PID pid(10.0,0.0,0.0,-5.0, 5.0); // k_p, k_i, k_d, o_min, o_max
+
+//essentially we have 5 parameters:
+// k_p, k_i, k_d, FORWARD_POWER and TURN_POWER
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -24,6 +30,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->resetRobotBtn, SIGNAL (released()), this, SLOT (resetRobot()));
     connect(ui->resetRouteBtn, SIGNAL (released()), this, SLOT (resetRoute()));
+
+    connect(ui->actionLoad_Route, SIGNAL(triggered(bool)), this, SLOT(loadRoute()));
+    connect(ui->actionSave_Route, SIGNAL(triggered(bool)), this, SLOT(saveRoute()));
+    connect(ui->actionExit,SIGNAL(triggered(bool)), this, SLOT(close()));
 
     resetRoute(10);
     resetRobot();
@@ -105,12 +115,16 @@ void MainWindow::timerEvent(QTimerEvent *){
     senseRobot();
 
     if(auto_control){
-        const int FORWARD_POWER = 20; // 0...255
-        const int TURN_POWER = 20; // 0...255
 
-        float err = robot.ir_val_r - robot.ir_val_l;
-        float turnFactor = err > 0? -1 : 1;
+        // autonomy control node goes here
 
+        const int FORWARD_POWER = 40; // 0...255
+        const int TURN_POWER = 40; // 0...255
+
+        float err = robot.ir_val_l - robot.ir_val_r;
+        //float turnFactor = err > 0? 1 : -1;
+        float turnFactor = pid.compute(err);
+        std::cout << turnFactor << std::endl;
         int leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
         int rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
 
@@ -147,9 +161,34 @@ void MainWindow::setIRHeight(int h){
 }
 
 void MainWindow::setAuto(bool a){
-    std::cout << a << std::endl;
+    //std::cout << a << std::endl;
     auto_control = a;
     if(!a){
+        //stop the robot when converting back to manual mode
         resetPower();
+    }
+}
+
+
+void MainWindow::saveRoute(){
+    //QFileDialog::setDefaultSuffix(".txt");
+    QString filter = "Text File (*.txt)";
+    QString fileName = QFileDialog::getSaveFileName(this,
+        tr("Save Route"), "",
+        filter,&filter);
+
+    if(!fileName.endsWith(".txt", Qt::CaseSensitive)){
+        fileName.append(".txt");
+    }
+
+    route.save(fileName);
+}
+
+void MainWindow::loadRoute(){
+    QString filter = "Text File (*.txt)";
+    QString fileName = QFileDialog::getOpenFileName(this,
+        tr("Load Route"), "", filter);
+    if(fileName != ""){
+        route.load(fileName);
     }
 }

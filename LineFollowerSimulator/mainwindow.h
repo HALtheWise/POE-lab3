@@ -5,6 +5,7 @@
 
 #include <QGraphicsView>
 #include <QGraphicsScene>
+#include <QFileDialog>
 
 #include "utils.h"
 #include "route.h"
@@ -36,13 +37,19 @@ public:
     void resetRoute(int n);
 public slots:
     void resetRobot();
-    void resetRoute();
+
     void senseRobot();
     void setLeftPower(int);
     void setRightPower(int);
     void resetPower();
     void setIRHeight(int);
+
+    void resetRoute();
+    void loadRoute();
+    void saveRoute();
+
     void setAuto(bool);
+
    protected:
     void timerEvent(QTimerEvent *event);
 };

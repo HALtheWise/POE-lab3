@@ -2,6 +2,8 @@
 #define __UTILS_H__
 
 #include <math.h>
+#include <QPointF>
+#include <iostream>
 
 extern const float CM_DIMS; // 256 cm x 256 cm
 extern const float PXL_DIMS; // 512 cm x 512 cm
@@ -30,5 +32,8 @@ extern float r2d(float r); //radians to degrees
 extern float pow2vel(float v); // converts "power" (input to adafruit board) to velocity
 
 float map(float val, float input_min, float input_max, float output_min, float output_max);
+float limit(float x, float min, float max);
+
+std::ostream& operator<<(std::ostream& os, QPointF p);
 
 #endif // UTILS_H

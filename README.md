@@ -1,4 +1,6 @@
-# POE-lab3 : Simulation
+# POE-lab3 : Simulation : Autonomy
+
+[Demo Video](https://youtu.be/jBecrwmV3AQ)
 
 ![Demo](images/simulation_demo.png)
 
@@ -38,3 +40,7 @@ On the bottom-right text box, you can see the reading from the IR sensor.
 Normalize your inputs as necessary and run your code!
 
 You may also adjust the height of your IR sensor to increase the size of your conical projection..
+
+#### Autonomy
+
+You can toggle "autonomy" option, which will make the robot follow the route on itself!
