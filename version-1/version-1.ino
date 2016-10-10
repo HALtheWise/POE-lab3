@@ -53,6 +53,7 @@ void setup()
 
 	pid.SetMode(AUTOMATIC);
 	pid.SetSampleTime(LOOP_DURATION);
+	pid.SetOutputLimits(-1, 1);
 }
 
 long totalLeft = 0;
@@ -77,7 +78,9 @@ void loop()
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
 
-		Serial.println(lineOffset(leftAvg, rightAvg));
+		Serial.print(lineOffset(leftAvg, rightAvg));
+		Serial.print("\t");
+		Serial.println(PIDoutput);
 
 		lineFollowPid(leftAvg, rightAvg);		
 
@@ -134,7 +137,7 @@ void normalizePowers(int *left, int *right, int limit){
 // readings.
 float lineOffset(float leftAvg, float rightAvg)
 {
-	return map(leftAvg, 780, 880, -100, 100);
+	return map(leftAvg, 780, 880, -100, 100) / 100.0;
 	//return rightAvg - leftAvg;
 }
 
