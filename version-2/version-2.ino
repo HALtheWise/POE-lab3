@@ -28,6 +28,7 @@ const int TURN_POWER = 20; // 0...255
 const int MIN_SENSOR = 920;
 const int MAX_SENSOR = 960;
 
+const double FOLLOW_MULTIPLIER = 1.0;
 
 // Pin setup (must match hardware)
 const byte leftSensorPin  = A1;
@@ -107,12 +108,26 @@ void loop()
 			}
 
 			if(robotPose.distAlong > 100){
-				Serial.println("finished course, replaying");
+				Serial.println("finished course, replaying.");
 
 				path.writeOut();
 
 			    state = STATE_REPLAY;
+			    robotPose.reset();
 			}
+		}else if(state == STATE_REPLAY){
+		    lineReplay();
+			
+			if(loopCount % 100 == 0){
+				writePoseSerial();
+			}
+
+			if(robotPose.distAlong > 100){
+				Serial.println("finished replay, stopping.");
+
+			    state = STATE_STOP;
+			}
+
 		}else{
 			leftPower = 0;
 			rightPower = 0;
@@ -157,6 +172,26 @@ void lineFollowPid(float leftAvg, float rightAvg)
 	normalizePowers(&leftPower, &rightPower, 255);
 }
 
+void lineReplay() {
+	PathPoint *target = path.getPoint(robotPose.distAlong);
+
+	// error is positive if the path is left of the robot
+	byte error = byte(target->wrappedAngle - byte(robotPose.angleFrom));
+
+	// whether the robot will turn right or left (positive is right)
+	double turnFactor = -error * 0.1;
+
+	leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
+	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
+
+	leftPower 	*= FOLLOW_MULTIPLIER;
+	rightPower 	*= FOLLOW_MULTIPLIER;
+
+
+	normalizePowers(&leftPower, &rightPower, 255);
+	Serial.println(leftPower);
+}
+
 // normalizePowers ensures that 
 // abs(left) < limit and abs(right) < limit
 // while maintaining their ratio.
@@ -166,8 +201,8 @@ void normalizePowers(int *left, int *right, int limit){
 	int maxabs = max(abs(*left), abs(*right));
 	if(maxabs > limit)
 	{
-	    *left = *left * (limit / maxabs);
-	    *right = *right * (limit / maxabs);
+	    *left = (*left * limit) / maxabs;
+	    *right = (*right * limit) / maxabs;
 	}
 }
 

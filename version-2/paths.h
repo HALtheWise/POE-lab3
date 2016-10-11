@@ -50,6 +50,7 @@ public:
 
 	void writeOut( void );
 	bool attemptUpdate( Pose *pose );
+	PathPoint *getPoint( double distAlong );
 };
 
 Path::Path(){
@@ -57,6 +58,15 @@ Path::Path(){
 	{
 		points[i] = PathPoint();
 	}
+}
+
+PathPoint *Path::getPoint( double distAlong ){
+	int index = min(distAlong, usedPoints - 1);
+	if (index < 0)
+	{
+		return NULL;
+	}
+	return &points[index];
 }
 
 bool Path::attemptUpdate( Pose *pose ) {
