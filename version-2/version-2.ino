@@ -25,6 +25,9 @@ const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop freque
 const int FORWARD_POWER = 20; // 0...255
 const int TURN_POWER = 20; // 0...255
 
+const int MIN_SENSOR = 920;
+const int MAX_SENSOR = 960;
+
 
 // Pin setup (must match hardware)
 const byte leftSensorPin  = A1;
@@ -109,7 +112,6 @@ void loop()
 
 		robotPose.odometryUpdate(leftPower, rightPower, dt);
 
-
 		if(loopCount % 100 == 0){
 			writePoseSerial();
 		}
@@ -172,7 +174,7 @@ void normalizePowers(int *left, int *right, int limit){
 // readings.
 float lineOffset(float leftAvg, float rightAvg)
 {
-	return map(rightAvg, 780, 880, -100, 100) / 100.0;
+	return map(rightAvg, MIN_SENSOR, MAX_SENSOR, -100, 100) / 100.0;
 	//return rightAvg - leftAvg;
 }
 
