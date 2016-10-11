@@ -51,7 +51,7 @@ byte lastState = state;
 int leftPower = 0, rightPower = 0; // range -255...255
 
 Pose robotPose;
-Path path;
+Path path1;
 
 // Setup PID controller
 double PIDerror=0, PIDsetpoint=0, PIDoutput;
@@ -103,7 +103,7 @@ void loop()
 			//Serial.println(lineOffset(leftAvg, rightAvg));
 			lineFollowPid(leftAvg, rightAvg);
 
-			path.attemptUpdate( &robotPose );
+			path1.attemptUpdate( &robotPose );
 		
 			if(loopCount % 100 == 0){
 				writePoseSerial();
@@ -119,7 +119,7 @@ void loop()
 				rightPower = 0;
 				driveMotors();
 
-				path.writeOut();
+				path1.writeOut();
 
 				delay(3000);
 
@@ -196,8 +196,8 @@ void lineFollowPid(float leftAvg, float rightAvg)
 	normalizePowers(&leftPower, &rightPower, 255);
 }
 
-void lineReplay() {
-	PathPoint *target = path.getPoint(robotPose.distAlong);
+void lineReplay(Path *path) {
+	PathPoint *target = path->getPoint(robotPose.distAlong);
 
 	// error is positive if the path is left of the robot
 	int error = byte(target->wrappedAngle - byte(robotPose.angleFrom));

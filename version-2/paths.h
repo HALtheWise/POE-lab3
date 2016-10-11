@@ -48,6 +48,8 @@ public:
 	const int allocatedPoints = 100;
 	int usedPoints = 0;
 
+	bool useLeftSensor = false;
+
 	void writeOut( void );
 	bool attemptUpdate( Pose *pose );
 	PathPoint *getPoint( double distAlong );
