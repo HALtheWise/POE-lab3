@@ -14,6 +14,8 @@
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
+#include <PID_v1.h>
+
 // Controlling constants
 
 const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
@@ -30,8 +32,14 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *leftMotor  = AFMS.getMotor(1);
 Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
-
+// Global variable setup (things that change each loop)
 long lastActionTime;
+
+// Setup PID controller
+double PIDerror=0, PIDsetpoint=0, PIDoutput;
+double kp=1,ki=0,kd=0;
+
+PID pid(&PIDerror, &PIDoutput, &PIDsetpoint, kp, ki, kd, DIRECT);
 
 void setup()
 {
@@ -43,6 +51,9 @@ void setup()
 	// Note that the analog sensors don't need initialization
 	AFMS.begin();
 
+	pid.SetMode(AUTOMATIC);
+	pid.SetSampleTime(LOOP_DURATION);
+	pid.SetOutputLimits(-1, 1);
 }
 
 long totalLeft = 0;
@@ -51,6 +62,8 @@ int count = 0;
 
 void loop()
 {
+	handleIncomingSerial();
+
 	int leftRead = 0;
 	int rightRead = 0;
 	getMeasurements(&leftRead, &rightRead);
@@ -65,31 +78,53 @@ void loop()
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
 
-		Serial.println(lineOffset(leftAvg, rightAvg));
+		Serial.print(lineOffset(leftAvg, rightAvg));
+		Serial.print("\t");
+		Serial.println(PIDoutput);
 
-		lineFollowBang(leftAvg, rightAvg);		
+		lineFollowPid(leftAvg, rightAvg);		
 
 		// Reset counting variables
-		lastActionTime = time;
 		totalRight = totalLeft = 0;
 		count = 0;
 
+		// This formulation attempts to ensure average loop duration is LOOP_DURATION,
+		// without causing hyperactive behavior if something blocks for a while.
+		lastActionTime = lastActionTime + LOOP_DURATION*int((time-lastActionTime) / LOOP_DURATION);
 	}
 }
 
 // Implements non-blocking bang-bang control of motors.
-void lineFollowBang(float leftAvg, float rightAvg)
+void lineFollowPid(float leftAvg, float rightAvg)
 {
 	float error = lineOffset(leftAvg, rightAvg);
+	PIDerror = error;
+
+	pid.Compute();
 
 	// whether the robot will turn right or left (positive is right)
-	// Notice negation of error value for negative feedback behavior
-	float turnFactor = error > 0 ? -1 : 1;
+	float turnFactor = PIDoutput;
 
 	int leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
 	int rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
 
+	normalizePowers(&leftPower, &rightPower, 255);
+
 	driveMotors(leftPower, rightPower);
+}
+
+// normalizePowers ensures that 
+// abs(left) < limit and abs(right) < limit
+// while maintaining their ratio.
+// Useful for constraining desired speeds to be
+// achievable by the motors.
+void normalizePowers(int *left, int *right, int limit){
+	int maxabs = max(abs(*left), abs(*right));
+	if(maxabs > limit)
+	{
+	    *left = *left * (limit / maxabs);
+	    *right = *right * (limit / maxabs);
+	}
 }
 
 // Returns the estimated offset of the robot from the line, with 
@@ -102,17 +137,44 @@ void lineFollowBang(float leftAvg, float rightAvg)
 // readings.
 float lineOffset(float leftAvg, float rightAvg)
 {
-	return map(leftAvg, 780, 880, -100, 100);
+	return map(leftAvg, 780, 880, -100, 100) / 100.0;
 	//return rightAvg - leftAvg;
 }
 
-// void writeSerial(float leftAvg, float rightAvg)
-// {
-// 	Serial.print(leftAvg);
-// 	Serial.print(",");
-// 	Serial.print(rightAvg);
-// 	Serial.print("\n");
-// }
+void handleIncomingSerial()
+{
+	if(Serial.available() > 0){
+
+		Serial.setTimeout(100);
+		// Read first number from serial stream
+		kp = Serial.parseFloat();
+		Serial.read();
+		ki = Serial.parseFloat();
+		Serial.read();
+		kd = Serial.parseFloat();
+		Serial.read();
+
+		// Ingest remainder of serial buffer in case something went wrong
+		while(Serial.available()){
+		    Serial.read();
+		}
+
+		pid.SetTunings(kp, ki, kd);
+		writeSerial();
+	}
+}
+
+void writeSerial()
+{
+	Serial.println("Tunings set to (kp, ki, kd) = ");
+	Serial.print("\t(");
+	Serial.print(kp);
+	Serial.print(", ");
+	Serial.print(ki);
+	Serial.print(", ");
+	Serial.print(kd);
+	Serial.print(")\n");
+}
 
 void driveMotors(int leftPower, int rightPower){
 	// Inputs leftPower and rightPower vary from -255...255
