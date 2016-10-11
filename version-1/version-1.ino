@@ -1,7 +1,7 @@
 /* 
 *	Version 1 Arduino code for Lab 3 of POE Fall 2016 as taught at Olin College
 *	This code demonstrates reading the sensor values and controlling the motors
-*	using a trivial bang-bang control scheme. 
+*	using a pretty simple PID control scheme. 
 *	This is not intended to be final code, but merely a proof of concept.
 *
 *	Authors: Eric Miller (eric@legoaces.org) and Jamie Cho (yoonyoung.cho@students.olin.edu)
@@ -94,7 +94,7 @@ void loop()
 	}
 }
 
-// Implements non-blocking bang-bang control of motors.
+// Implements non-blocking PID control of motors.
 void lineFollowPid(float leftAvg, float rightAvg)
 {
 	float error = lineOffset(leftAvg, rightAvg);
