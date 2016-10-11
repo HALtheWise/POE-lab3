@@ -15,8 +15,8 @@
 #include <PID_v1.h>
 
 // Include path management code
-#include "paths.h"
 #include "odometry.h"
+#include "paths.h"
 
 // Controlling constants
 
@@ -48,6 +48,7 @@ const byte STATE_REPLAY = 2;
 int leftPower = 0, rightPower = 0; // range -255...255
 
 Pose robotPose;
+Path path;
 
 // Setup PID controller
 double PIDerror=0, PIDsetpoint=0, PIDoutput;
@@ -99,8 +100,17 @@ void loop()
 			//Serial.println(lineOffset(leftAvg, rightAvg));
 			lineFollowPid(leftAvg, rightAvg);
 
+			path.attemptUpdate( &robotPose );
+			
+			if(loopCount % 100 == 0){
+				writePoseSerial();
+			}
+
 			if(robotPose.distAlong > 100){
 				Serial.println("finished course, replaying");
+
+				path.writeOut();
+
 			    state = STATE_REPLAY;
 			}
 		}else{
@@ -112,12 +122,9 @@ void loop()
 
 		robotPose.odometryUpdate(leftPower, rightPower, dt);
 
-		if(loopCount % 100 == 0){
-			writePoseSerial();
-		}
 
-
-		if(dt > LOOP_DURATION * 2){
+		// This code intentionally refuses to run every 10th loop to prevent feeding badly
+		if(dt > LOOP_DURATION * 2 && loopCount % 10){
 		    Serial.print("WARNING: Main loop running too slow: ");
 		    Serial.println(dt);
 		}

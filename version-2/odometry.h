@@ -4,6 +4,7 @@ public:
 	Pose();
 	void odometryUpdate(int leftPower, int rightPower, int timestep);
 	void writeOut( void );
+	void reset();
 	// Measured in cm, with positive being forward of the starting position
 	double distAlong;
 	// Measured in degrees, with positive being nose left.
@@ -11,8 +12,7 @@ public:
 };
 
 Pose::Pose() {
-	distAlong = 0;
-	angleFrom = 0;
+	reset();
 }
 
 void Pose::writeOut( void ) {
@@ -21,6 +21,11 @@ void Pose::writeOut( void ) {
 	Serial.print(", ");
 	Serial.print(angleFrom);
 	Serial.print(")");
+}
+
+void Pose::reset(){
+	distAlong = 0;
+	angleFrom = 0;
 }
 
 const double MAX_FORWARD_SPEED = 100;

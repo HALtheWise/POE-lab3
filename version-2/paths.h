@@ -45,20 +45,33 @@ public:
 	Path();
 
 	PathPoint points[100];
-	const int numPoints = 100;
+	const int allocatedPoints = 100;
+	int usedPoints = 0;
 
 	void writeOut( void );
+	bool attemptUpdate( Pose *pose );
 };
 
 Path::Path(){
-	for (int i = 0; i < numPoints; ++i)
+	for (int i = 0; i < allocatedPoints; ++i)
 	{
 		points[i] = PathPoint();
 	}
 }
 
+bool Path::attemptUpdate( Pose *pose ) {
+	if (int(pose->distAlong) > usedPoints && usedPoints < allocatedPoints){
+		usedPoints++;
+		points[usedPoints].wrappedAngle = pose->angleFrom;
+		return true;
+	} else {
+		return false;
+	}
+}
+
 void Path::writeOut(){
-	for (int i = 0; i < numPoints; ++i)
+	Serial.println("id\tspeed\tisOffLine\tangle");
+	for (int i = 0; i < usedPoints; ++i)
 	{
 		Serial.print(i);
 		Serial.print("\t");
