@@ -124,12 +124,12 @@ void MainWindow::timerEvent(QTimerEvent *){
         float err = robot.ir_val_l - robot.ir_val_r;
         //float turnFactor = err > 0? 1 : -1;
         float turnFactor = pid.compute(err);
-        std::cout << turnFactor << std::endl;
+        //std::cout << turnFactor << std::endl;
         int leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
         int rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
 
-        setRightPower (rightPower);
-        setLeftPower (leftPower);
+        ui->l_pow_slider->setValue(leftPower);
+        ui->r_pow_slider->setValue(rightPower);
     }
 
     robot.update();
@@ -169,6 +169,12 @@ void MainWindow::setAuto(bool a){
     }
 }
 
+
+void MainWindow::setSimAccel(double accel){
+    killTimer(timerId);
+    SIMULATION_ACCELARATION = accel;
+    timerId = startTimer(DT * 1000 / SIMULATION_ACCELARATION);
+}
 
 void MainWindow::saveRoute(){
     //QFileDialog::setDefaultSuffix(".txt");

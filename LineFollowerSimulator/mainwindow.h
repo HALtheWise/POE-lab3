@@ -49,7 +49,7 @@ public slots:
     void saveRoute();
 
     void setAuto(bool);
-
+    void setSimAccel(double);
    protected:
     void timerEvent(QTimerEvent *event);
 };

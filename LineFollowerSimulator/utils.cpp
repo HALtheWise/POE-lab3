@@ -7,7 +7,7 @@ const float PXL_DIMS = 512; // 512 cm x 512 cm
 
 const float DT = 0.01;
 
-const float SIMULATION_ACCELARATION = 1.;
+float SIMULATION_ACCELARATION = 1.;
 
 const float ROBOT_LENGTH = c2p(20);
 const float ROBOT_WIDTH = c2p(16);

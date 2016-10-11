@@ -265,6 +265,32 @@
      <string>Automatic</string>
     </property>
    </widget>
+   <widget class="QSplitter" name="splitter_11">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>540</y>
+      <width>191</width>
+      <height>24</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Sim. Accel</string>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="doubleSpinBox">
+     <property name="minimum">
+      <double>0.000000000000000</double>
+     </property>
+     <property name="value">
+      <double>1.000000000000000</double>
+     </property>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -425,6 +451,22 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>doubleSpinBox</sender>
+   <signal>valueChanged(double)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>setSimAccel(double)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>170</x>
+     <y>591</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>293</x>
+     <y>586</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>setLeftPower(int)</slot>
@@ -432,5 +474,6 @@
   <slot>resetPower()</slot>
   <slot>setIRHeight(int)</slot>
   <slot>setAuto(bool)</slot>
+  <slot>setSimAccel(double)</slot>
  </slots>
 </ui>

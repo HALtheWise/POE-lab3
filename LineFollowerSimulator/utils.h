@@ -9,7 +9,7 @@ extern const float CM_DIMS; // 256 cm x 256 cm
 extern const float PXL_DIMS; // 512 cm x 512 cm
 
 extern const float DT; // simulation resolution, in seconds
-extern const float SIMULATION_ACCELARATION; //simulation acceleration multiplier
+extern float SIMULATION_ACCELARATION; //simulation acceleration multiplier
 
 extern const float ROBOT_WIDTH; // in cm
 extern const float ROBOT_LENGTH;
