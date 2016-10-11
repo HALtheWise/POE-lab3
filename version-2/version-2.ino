@@ -36,8 +36,13 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 // Global variable setup (things that change each loop)
 long lastActionTime;
-// Power levels range -255...255
-int leftPower = 0, rightPower = 0;
+
+byte state = 1;
+const byte STATE_STOP = 0;
+const byte STATE_FOLLOWING = 1;
+const byte STATE_REPLAY = 2;
+
+int leftPower = 0, rightPower = 0; // range -255...255
 
 Pose robotPose;
 
@@ -66,6 +71,8 @@ long totalLeft = 0;
 long totalRight = 0;
 int count = 0;
 
+int loopCount = 0;
+
 void loop()
 {
 	handleIncomingSerial();
@@ -85,16 +92,38 @@ void loop()
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
 
-		lineFollowPid(leftAvg, rightAvg);
-		//Serial.println(lineOffset(leftAvg, rightAvg));
+		if(state == STATE_FOLLOWING){
+			//Serial.println(lineOffset(leftAvg, rightAvg));
+			lineFollowPid(leftAvg, rightAvg);
+
+			if(robotPose.distAlong > 100){
+				Serial.println("finished course, replaying");
+			    state = STATE_REPLAY;
+			}
+		}else{
+			leftPower = 0;
+			rightPower = 0;
+		}
+
+		driveMotors();
 
 		robotPose.odometryUpdate(leftPower, rightPower, dt);
 
-		writePoseSerial();
+
+		if(loopCount % 100 == 0){
+			writePoseSerial();
+		}
+
+
+		if(dt > LOOP_DURATION * 2){
+		    Serial.print("WARNING: Main loop running too slow: ");
+		    Serial.println(dt);
+		}
 
 		// Reset counting variables
 		totalRight = totalLeft = 0;
 		count = 0;
+		loopCount++;
 
 		// This formulation attempts to ensure average loop duration is LOOP_DURATION,
 		// without causing hyperactive behavior if something blocks for a while.
@@ -117,8 +146,6 @@ void lineFollowPid(float leftAvg, float rightAvg)
 	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
 
 	normalizePowers(&leftPower, &rightPower, 255);
-
-	driveMotors();
 }
 
 // normalizePowers ensures that 
