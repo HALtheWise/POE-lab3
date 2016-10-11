@@ -16,7 +16,7 @@ Jamie :
 Eric :
 
 - [x] Build data structures for storing path data
-- [ ] Integrate motor characterization into kinematics model
+- [x] Integrate motor characterization into kinematics model
 - [x] Record line-followed path
 - [x] Play back recorded path losslessly
 - [ ] Hybridize path following and line following

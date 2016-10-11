@@ -32,7 +32,7 @@ const double MAX_FORWARD_SPEED = 100;
 const double MAX_TURN_SPEED = 500;
 
 double adjustPower( int power ){
-	double powerfrac = power / 255.0
+	double powerfrac = power / 255.0;
 	return powerfrac - .05 * powerfrac * powerfrac;
 }
 
