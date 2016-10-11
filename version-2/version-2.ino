@@ -20,15 +20,15 @@
 
 // Controlling constants
 
-const int LOOP_DURATION = 20; //(ms) This is the inverse of the main loop frequency
+const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
 
-const int FORWARD_POWER = 100; // 0...255
-const int TURN_POWER = 100; // 0...255
+const int FORWARD_POWER = 20; // 0...255
+const int TURN_POWER = 20; // 0...255
 
 
 // Pin setup (must match hardware)
-const byte leftSensorPin  = A0;
-const byte rightSensorPin = A1;
+const byte leftSensorPin  = A1;
+const byte rightSensorPin = A0;
 
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 Adafruit_DCMotor *leftMotor  = AFMS.getMotor(1);
@@ -59,6 +59,7 @@ void setup()
 
 	pid.SetMode(AUTOMATIC);
 	pid.SetSampleTime(LOOP_DURATION);
+	pid.SetOutputLimits(-1, 1);
 }
 
 long totalLeft = 0;
@@ -85,6 +86,7 @@ void loop()
 		float rightAvg = float(totalRight) / count;
 
 		lineFollowPid(leftAvg, rightAvg);
+		//Serial.println(lineOffset(leftAvg, rightAvg));
 
 		robotPose.odometryUpdate(leftPower, rightPower, dt);
 
@@ -143,7 +145,8 @@ void normalizePowers(int *left, int *right, int limit){
 // readings.
 float lineOffset(float leftAvg, float rightAvg)
 {
-	return rightAvg - leftAvg;
+	return map(rightAvg, 780, 880, -100, 100) / 100.0;
+	//return rightAvg - leftAvg;
 }
 
 void handleIncomingSerial()
