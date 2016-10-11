@@ -102,13 +102,18 @@ void loop()
 			lineFollowPid(leftAvg, rightAvg);
 
 			path.attemptUpdate( &robotPose );
-			
+		
 			if(loopCount % 100 == 0){
 				writePoseSerial();
 			}
 
 			if(robotPose.distAlong > 100){
 				Serial.println("finished course, replaying.");
+
+
+				leftPower = 0;
+				rightPower = 0;
+				driveMotors();
 
 				path.writeOut();
 
