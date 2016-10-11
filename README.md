@@ -15,6 +15,15 @@ Jamie :
 
 Eric :
 
+- [x] Build data structures for storing path data
+- [ ] Integrate motor characterization into kinematics model
+- [x] Record line-followed path
+- [x] Play back recorded path losslessly
+- [ ] Hybridize path following and line following
+- [ ] Make framework for segmented paths (using turns as odometry resets)
+- [x] Build state machine in code for handling training/replaying
+- [ ] Precompile known path into memory for competition
+
 
 # IR Reflectance Sensor Wiring Diagram
 
