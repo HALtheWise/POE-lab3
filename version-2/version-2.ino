@@ -176,7 +176,10 @@ void lineReplay() {
 	PathPoint *target = path.getPoint(robotPose.distAlong);
 
 	// error is positive if the path is left of the robot
-	byte error = byte(target->wrappedAngle - byte(robotPose.angleFrom));
+	int error = byte(target->wrappedAngle - byte(robotPose.angleFrom));
+	if(error > 127){
+	    error = error - 256;
+	}
 
 	// whether the robot will turn right or left (positive is right)
 	double turnFactor = -error * 0.1;
@@ -187,9 +190,14 @@ void lineReplay() {
 	leftPower 	*= FOLLOW_MULTIPLIER;
 	rightPower 	*= FOLLOW_MULTIPLIER;
 
+	if(loopCount % 50 == 0){
+	    Serial.print("Error = ");
+	    Serial.print(error);
+	    Serial.print(":");
+	    Serial.println(turnFactor);
+	}
 
 	normalizePowers(&leftPower, &rightPower, 255);
-	Serial.println(leftPower);
 }
 
 // normalizePowers ensures that 
