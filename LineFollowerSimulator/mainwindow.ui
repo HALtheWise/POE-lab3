@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>611</width>
-    <height>408</height>
+    <width>779</width>
+    <height>634</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,16 +19,33 @@
      <rect>
       <x>20</x>
       <y>20</y>
-      <width>256</width>
-      <height>256</height>
+      <width>512</width>
+      <height>512</height>
      </rect>
+    </property>
+    <property name="verticalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOff</enum>
+    </property>
+    <property name="horizontalScrollBarPolicy">
+     <enum>Qt::ScrollBarAlwaysOff</enum>
+    </property>
+    <property name="sceneRect">
+     <rectf>
+      <x>0.000000000000000</x>
+      <y>0.000000000000000</y>
+      <width>512.000000000000000</width>
+      <height>512.000000000000000</height>
+     </rectf>
+    </property>
+    <property name="viewportUpdateMode">
+     <enum>QGraphicsView::FullViewportUpdate</enum>
     </property>
    </widget>
    <widget class="QPushButton" name="resetRobotBtn">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>50</y>
+      <x>580</x>
+      <y>30</y>
       <width>141</width>
       <height>23</height>
      </rect>
@@ -40,8 +57,8 @@
    <widget class="QPushButton" name="resetRouteBtn">
     <property name="geometry">
      <rect>
-      <x>370</x>
-      <y>100</y>
+      <x>580</x>
+      <y>60</y>
       <width>80</width>
       <height>23</height>
      </rect>
@@ -53,8 +70,8 @@
    <widget class="QLineEdit" name="routePointsEdit">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>100</y>
+      <x>580</x>
+      <y>90</y>
       <width>113</width>
       <height>23</height>
      </rect>
@@ -75,7 +92,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>611</width>
+     <width>779</width>
      <height>20</height>
     </rect>
    </property>
