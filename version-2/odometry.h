@@ -31,8 +31,14 @@ void Pose::reset(){
 const double MAX_FORWARD_SPEED = 100;
 const double MAX_TURN_SPEED = 500;
 
+int adjustPower( int power ){
+	return power-3;
+}
+
 // Update the estimated pose of the robot based on wheel (estimated) odometry.
 void Pose::odometryUpdate( int leftPower, int rightPower, int timestep) {
+	leftPower  = adjustPower(leftPower);
+	rightPower = adjustPower(rightPower);
 	double forwardSpeed = (leftPower + rightPower) / 2 * MAX_FORWARD_SPEED / 255.0;
 	double turnSpeed = (rightPower - leftPower) / 2 * MAX_TURN_SPEED / 255.0;
 

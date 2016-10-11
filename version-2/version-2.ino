@@ -22,13 +22,13 @@
 
 const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
 
-const int FORWARD_POWER = 30; // 0...255
-const int TURN_POWER = 30; // 0...255
+const int FORWARD_POWER = 18; // 0...255
+const int TURN_POWER = 18; // 0...255
 
 const int MIN_SENSOR = 920;
 const int MAX_SENSOR = 960;
 
-const double FOLLOW_MULTIPLIER = 1.0;
+const double FOLLOW_MULTIPLIER = 2.0;
 
 // Pin setup (must match hardware)
 const byte leftSensorPin  = A1;
