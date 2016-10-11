@@ -70,7 +70,7 @@ void setup()
 	AFMS.begin();
 
 	pid.SetMode(AUTOMATIC);
-	pid.SetSampleTime(LOOP_DURATION);
+	pid.SetSampleTime(LOOP_DURATION - 2);
 	pid.SetOutputLimits(-1, 1);
 }
 
@@ -207,7 +207,7 @@ void lineReplay(Path *path, float leftAvg, float rightAvg) {
 	pathError /= 255;
 
 
-	double lineError = lineOffset(leftAvg, rightAvg);
+	double lineError = lineOffset(leftAvg, rightAvg, path->useLeftSensor);
 	PIDerror = lineError;
 
 	pid.Compute();
@@ -254,9 +254,10 @@ void normalizePowers(int *left, int *right, int limit){
 // Currently the returned value is dimensionless, and
 // represents only the data derivable from the immediate sensor
 // readings.
-float lineOffset(float leftAvg, float rightAvg)
+float lineOffset(float leftAvg, float rightAvg, bool useLeftSensor = false)
 {
-	return map(rightAvg, MIN_SENSOR, MAX_SENSOR, -100, 100) / 100.0;
+	float sensorVal = useLeftSensor ? leftAvg : rightAvg;
+	return map(sensorVal, MIN_SENSOR, MAX_SENSOR, -100, 100) / 100.0;
 	//return rightAvg - leftAvg;
 }
 
