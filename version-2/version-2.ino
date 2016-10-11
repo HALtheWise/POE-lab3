@@ -22,8 +22,8 @@
 
 const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
 
-const int FORWARD_POWER = 20; // 0...255
-const int TURN_POWER = 20; // 0...255
+const int FORWARD_POWER = 30; // 0...255
+const int TURN_POWER = 30; // 0...255
 
 const int MIN_SENSOR = 920;
 const int MAX_SENSOR = 960;
@@ -45,6 +45,8 @@ byte state = 1;
 const byte STATE_STOP = 0;
 const byte STATE_FOLLOWING = 1;
 const byte STATE_REPLAY = 2;
+
+byte lastState = state;
 
 int leftPower = 0, rightPower = 0; // range -255...255
 
@@ -106,6 +108,8 @@ void loop()
 			if(loopCount % 100 == 0){
 				writePoseSerial();
 			}
+			
+			lastState = state;
 
 			if(robotPose.distAlong > 100){
 				Serial.println("finished course, replaying.");
@@ -117,15 +121,24 @@ void loop()
 
 				path.writeOut();
 
+				delay(3000);
+
 			    state = STATE_REPLAY;
-			    robotPose.reset();
 			}
+			
 		}else if(state == STATE_REPLAY){
+			if (lastState != STATE_REPLAY){
+				Serial.println("Odometry reset");
+				robotPose.reset();
+			}
+
 		    lineReplay();
 			
 			if(loopCount % 100 == 0){
 				writePoseSerial();
 			}
+			
+			lastState = state;
 
 			if(robotPose.distAlong > 100){
 				Serial.println("finished replay, stopping.");
@@ -136,6 +149,8 @@ void loop()
 		}else{
 			leftPower = 0;
 			rightPower = 0;
+			
+			lastState = state;
 		}
 
 		driveMotors();
@@ -157,6 +172,10 @@ void loop()
 		// This formulation attempts to ensure average loop duration is LOOP_DURATION,
 		// without causing hyperactive behavior if something blocks for a while.
 		lastActionTime = lastActionTime + LOOP_DURATION*int(dt / LOOP_DURATION);
+
+		if (millis() - lastActionTime > 500) {
+			lastActionTime = millis();
+		}
 	}
 }
 
@@ -198,7 +217,7 @@ void lineReplay() {
 	if(loopCount % 50 == 0){
 	    Serial.print("Error = ");
 	    Serial.print(error);
-	    Serial.print(":");
+	    Serial.print("\t:\t");
 	    Serial.println(turnFactor);
 	}
 
