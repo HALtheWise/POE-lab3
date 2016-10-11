@@ -25,8 +25,8 @@ const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop freque
 const int FORWARD_POWER = 18; // 0...255
 const int TURN_POWER = 18; // 0...255
 
-const int MIN_SENSOR = 920;
-const int MAX_SENSOR = 960;
+const int MIN_SENSOR = 300;
+const int MAX_SENSOR = 800;
 
 const double FOLLOW_MULTIPLIER = 2.0;
 
@@ -132,7 +132,7 @@ void loop()
 				robotPose.reset();
 			}
 
-		    lineReplay();
+		    lineReplay(&path1, leftAvg, rightAvg);
 			
 			if(loopCount % 100 == 0){
 				writePoseSerial();
@@ -196,17 +196,25 @@ void lineFollowPid(float leftAvg, float rightAvg)
 	normalizePowers(&leftPower, &rightPower, 255);
 }
 
-void lineReplay(Path *path) {
+void lineReplay(Path *path, float leftAvg, float rightAvg) {
 	PathPoint *target = path->getPoint(robotPose.distAlong);
 
 	// error is positive if the path is left of the robot
-	int error = byte(target->wrappedAngle - byte(robotPose.angleFrom));
-	if(error > 127){
-	    error = error - 256;
+	double pathError = byte(target->wrappedAngle - byte(robotPose.angleFrom));
+	if(pathError > 127){
+	    pathError = pathError - 256;
 	}
+	pathError /= 255;
+
+
+	double lineError = lineOffset(leftAvg, rightAvg);
+	PIDerror = lineError;
+
+	pid.Compute();
+
 
 	// whether the robot will turn right or left (positive is right)
-	double turnFactor = -error * 0.1;
+	double turnFactor = -pathError * 30 + PIDoutput * 0.3;
 
 	leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
 	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
@@ -215,8 +223,8 @@ void lineReplay(Path *path) {
 	rightPower 	*= FOLLOW_MULTIPLIER;
 
 	if(loopCount % 50 == 0){
-	    Serial.print("Error = ");
-	    Serial.print(error);
+	    Serial.print("pathError = ");
+	    Serial.print(pathError);
 	    Serial.print("\t:\t");
 	    Serial.println(turnFactor);
 	}
