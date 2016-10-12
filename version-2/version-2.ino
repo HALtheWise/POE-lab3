@@ -27,20 +27,16 @@ const int TURN_POWER_INITIAL = 30; // 0...255
 
 const float OUTER_TURN_LIMIT = 0.2;
 
-const int POWER_REPLAY = 45; // 0...255
+const int POWER_REPLAY = 40; // 0...255
 
 const double PATH_STEERING_RATE = .20; // Measured in fraction / degree, path-based replay steering constant.
 
-const double LINE_ANGLE_ADJUSTMENT_RATE = 40.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
+const double LINE_ANGLE_ADJUSTMENT_RATE = 50.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
 
 const int MIN_SENSOR_LEFT 	= 281;
 const int MAX_SENSOR_LEFT 	= 804;
 const int MIN_SENSOR_RIGHT	= 630;
 const int MAX_SENSOR_RIGHT 	= 880;
-
-const double FOLLOW_MULTIPLIER = 1.5;
-
-const int MAX_PATH_LENGTH = 200;
 
 // Pin setup (must match hardware)
 const byte leftSensorPin  = A0;
@@ -67,9 +63,8 @@ Pose robotPose;
 
 Path path1(200, false);
 Path path2(100, true);
-Path path3(500, false);
 
-Path *paths[] = {&path1, &path2, &path3};
+Path *paths[] = {&path1, &path2};
 const byte numPaths = 2;
 byte currentPathId = 0;
 
@@ -94,6 +89,9 @@ void setup()
 	pid.SetMode(AUTOMATIC);
 	pid.SetSampleTime(LOOP_DURATION - 2);
 	pid.SetOutputLimits(-1, 1);
+
+	stop();
+	delay(1000);
 }
 
 long totalLeft = 0;
@@ -198,7 +196,11 @@ void memorizeLine(float leftAvg, float rightAvg)
 	pid.Compute();
 
 	// whether the robot will turn right or left (positive is right)
-	float turnFactor = -PIDoutput;
+	float turnFactor = PIDoutput;
+
+	if (!useLeftSensor){
+		turnFactor *= -1;
+	}
 
 	// Step 2: constrain that error to make sure the robot doesn't turn (much) toward the line
 	if(useLeftSensor){
@@ -219,7 +221,7 @@ void memorizeLine(float leftAvg, float rightAvg)
 
 	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
-	if (offReading > 0.5 || robotPose.distAlong > MAX_PATH_LENGTH){
+	if (offReading > 0.5 || robotPose.distAlong > currentPath->allocatedPoints){
 		// The robot's off-line sensor has seen a line
 		Serial.println("segment end detected");
 
@@ -272,7 +274,7 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 
 	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
-	if ((offReading > 0.5 && robotPose.distAlong > currentPath->usedPoints*0.7) || robotPose.distAlong > MAX_PATH_LENGTH){
+	if (offReading > 0.5 && robotPose.distAlong > currentPath->usedPoints*0.7){
 		// The robot's off-line sensor has seen a line
 		Serial.println("segment end detected");
 
