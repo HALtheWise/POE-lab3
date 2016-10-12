@@ -129,7 +129,7 @@ void loop()
 			
 			lastState = state;
 
-            if(robotPose.distAlong > 800){ // ~ 8m ish
+            if(robotPose.distAlong > 100){ // ~ 8m ish
 
 				Serial.println("finished course, replaying.");
 
@@ -142,6 +142,7 @@ void loop()
                 //delay(3000); THIS IS CAUSING PROBLEMS, COMMENTING IT OUT FOR NOW. TODO : fix
 
 			    state = STATE_REPLAY;
+                Serial.println("BEGINNING REPLAY!");
 			}
 			
 		}else if(state == STATE_REPLAY){
@@ -158,7 +159,7 @@ void loop()
 			
 			lastState = state;
 
-            if(robotPose.distAlong > 800){
+            if(robotPose.distAlong > 100){
 				Serial.println("finished replay, stopping.");
 
 			    state = STATE_STOP;
@@ -256,7 +257,7 @@ void lineReplay(Path *path, float leftAvg, float rightAvg) {
 // Useful for constraining desired speeds to be
 // achievable by the motors.
 void normalizePowers(int *left, int *right, int limit){
-    Serial.print("L : "); Serial.print(*left); Serial.print(" R : "); Serial.println(*right);
+    //Serial.print("L : "); Serial.print(*left); Serial.print(" R : "); Serial.println(*right);
 
 	int maxabs = max(abs(*left), abs(*right));
 

@@ -32,7 +32,7 @@ void Pose::odometryUpdate( int leftPower, int rightPower, int timestep) {
 
     double forwardSpeed = (leftPower + rightPower) / 2 / 255. * MAX_FORWARD_SPEED;
 
-    Serial.println(leftPower);
+    //Serial.println(leftPower);
     double turnSpeed = (rightPower - leftPower) / 2 / 255. * MAX_TURN_SPEED;
 
     distAlong += forwardSpeed * timestep / 1000.0;
