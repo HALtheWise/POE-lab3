@@ -68,7 +68,7 @@ Path path2;
 Path path3;
 
 Path *paths[] = {&path1, &path2, &path3};
-const byte numPaths = 3;
+const byte numPaths = 1;
 byte currentPathId = 0;
 
 Path *currentPath = paths[currentPathId];
@@ -203,14 +203,19 @@ void memorizeLine(float leftAvg, float rightAvg)
 	// whether the robot will turn right or left (positive is right)
 	float turnFactor = PIDoutput;
 
-	leftPower	= POWER_REPLAY * (1 + turnFactor);
-	rightPower	= POWER_REPLAY * (1 - turnFactor);
+	leftPower	= FORWARD_POWER_INITIAL + turnFactor * TURN_POWER_INITIAL;
+	rightPower	= FORWARD_POWER_INITIAL - turnFactor * TURN_POWER_INITIAL;
+
+	normalizePowers(&leftPower, &rightPower, 255);
+	
 
 	// Reading from sensor off of the line
 	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
 	if (offReading > 0 || robotPose.distAlong > MAX_PATH_LENGTH){
 		// The robot's off-line sensor has seen a line
+		Serial.println("segment end detected");
+
 		stop();
 		delay(1000);
 		robotPose.reset();
@@ -257,11 +262,8 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 	// whether the robot will turn right or left (positive is right)
 	double turnFactor = -pathError * PATH_STEERING_RATE;
 
-	leftPower	=  + turnFactor * TURN_POWER;
-	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
-
-	leftPower 	*= FOLLOW_MULTIPLIER;
-	rightPower 	*= FOLLOW_MULTIPLIER;
+	leftPower	= POWER_REPLAY * (1 + turnFactor);
+	rightPower	= POWER_REPLAY * (1 - turnFactor);
 
 	// Step 3: Determine whether this segment of path is finished
 
@@ -269,6 +271,8 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 
 	if (offReading > 0 || robotPose.distAlong > MAX_PATH_LENGTH){
 		// The robot's off-line sensor has seen a line
+		Serial.println("segment end detected");
+
 		stop();
 		delay(1000);
 		robotPose.reset();
