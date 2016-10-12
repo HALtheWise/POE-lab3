@@ -22,8 +22,14 @@
 
 const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
 
-const int FORWARD_POWER = 25; // 0...255
-const int TURN_POWER = 25; // 0...255
+const int FORWARD_POWER_INITIAL = 30; // 0...255
+const int TURN_POWER_INITIAL = 30; // 0...255
+
+const int POWER_REPLAY = 45; // 0...255
+
+const double PATH_STEERING_RATE = .20; // Measured in fraction / degree, path-based replay steering constant.
+
+const double LINE_ANGLE_ADJUSTMENT_RATE = 20.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
 
 const int MIN_SENSOR_LEFT 	= 281;
 const int MAX_SENSOR_LEFT 	= 804;
@@ -31,6 +37,8 @@ const int MIN_SENSOR_RIGHT	= 533;
 const int MAX_SENSOR_RIGHT 	= 860;
 
 const double FOLLOW_MULTIPLIER = 1.5;
+
+const int MAX_PATH_LENGTH = 200;
 
 // Pin setup (must match hardware)
 const byte leftSensorPin  = A0;
@@ -139,7 +147,7 @@ void loop()
 			
 		}else if(state == STATE_REPLAY){
 
-			replayLine(leftAvg, rightAvg);
+			replayLine(leftAvg, rightAvg, dt);
 			
 			if(loopCount % 100 == 0){
 				writePoseSerial();
@@ -195,15 +203,13 @@ void memorizeLine(float leftAvg, float rightAvg)
 	// whether the robot will turn right or left (positive is right)
 	float turnFactor = PIDoutput;
 
-	leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
-	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
-
-	normalizePowers(&leftPower, &rightPower, 255);
+	leftPower	= POWER_REPLAY * (1 + turnFactor);
+	rightPower	= POWER_REPLAY * (1 - turnFactor);
 
 	// Reading from sensor off of the line
 	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
-	if (offReading > 0 || robotPose.distAlong > 200){
+	if (offReading > 0 || robotPose.distAlong > MAX_PATH_LENGTH){
 		// The robot's off-line sensor has seen a line
 		stop();
 		delay(1000);
@@ -222,48 +228,67 @@ void memorizeLine(float leftAvg, float rightAvg)
 	}
 
 
+	// Print debug information
 	if(loopCount % 100 == 0){
 		writePoseSerial();
 	}
 }
 
-void replayLine(float leftAvg, float rightAvg) {
+void replayLine(float leftAvg, float rightAvg, int dt) {
 	bool useLeftSensor = currentPath->useLeftSensor;
+
+	// Step 1: adjust current odometry estimate on the basis of sensor readings.
+
+	double lineError = lineOffset(leftAvg, rightAvg, useLeftSensor);
+
+	robotPose.angleFrom += LINE_ANGLE_ADJUSTMENT_RATE * dt * lineError;
+
+	// Step 2: Drive the robot to follow the recorded path
 
 	PathPoint *target = currentPath->getPoint(robotPose.distAlong);
 
 	// error is positive if the path is left of the robot
-	// TODO: Handle intentional offsets from sensor feedback
 	double pathError = byte(target->wrappedAngle - byte(robotPose.angleFrom));
 	if(pathError > 127){
 	    pathError = pathError - 256;
 	}
 	pathError /= 255;
 
-
-	double lineError = lineOffset(leftAvg, rightAvg, useLeftSensor);
-	PIDerror = lineError;
-
-	pid.Compute();
-
-
 	// whether the robot will turn right or left (positive is right)
-	double turnFactor = -pathError * 30 + PIDoutput * 0.3;
+	double turnFactor = -pathError * PATH_STEERING_RATE;
 
-	leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
+	leftPower	=  + turnFactor * TURN_POWER;
 	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
 
 	leftPower 	*= FOLLOW_MULTIPLIER;
 	rightPower 	*= FOLLOW_MULTIPLIER;
 
+	// Step 3: Determine whether this segment of path is finished
+
+	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
+
+	if (offReading > 0 || robotPose.distAlong > MAX_PATH_LENGTH){
+		// The robot's off-line sensor has seen a line
+		stop();
+		delay(1000);
+		robotPose.reset();
+
+		if(currentPathId < numPaths - 1){
+		    currentPathId++;
+		    currentPath = paths[currentPathId];
+		}else{
+			state = STATE_STOP;
+		}
+
+	}
+
+	// Print debug information
 	if(loopCount % 50 == 0){
 	    Serial.print("pathError = ");
 	    Serial.print(pathError);
 	    Serial.print("\t:\t");
 	    Serial.println(turnFactor);
 	}
-
-	normalizePowers(&leftPower, &rightPower, 255);
 }
 
 // normalizePowers ensures that 
@@ -341,6 +366,8 @@ void stop(){
 void driveMotors(){
 	// Inputs leftPower and rightPower vary from -255...255
 	// Code in this function is based on https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/using-dc-motors
+
+	normalizePowers(&leftPower, &rightPower, 255);
 
 	// For each motor, decide whether to run it FORWARD, BACKWARD, (or RELEASE)
 	// These are ternary operators, returning FORWARD if power > 0 and backward otherwise.
