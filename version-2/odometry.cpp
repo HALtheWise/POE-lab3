@@ -1,5 +1,9 @@
 #include "odometry.h"
 
+#ifdef __AVR__
+#include <Arduino.h>
+#endif
+
 Pose::Pose() {
     reset();
 }

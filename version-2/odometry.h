@@ -1,8 +1,10 @@
 #ifndef __ODOMETRY_H__
 #define __ODOMETRY_H__
 
+#ifndef __AVR__
 #include "arduino.h"
 #include "utils.h"
+#endif
 
 class Pose
 {

@@ -1,9 +1,14 @@
 #ifndef __PATHS_H__
 #define __PATHS_H__
 
-#include "arduino.h"
 #include "odometry.h"
+
+#ifndef __AVR__
+#include "arduino.h"
 #include "utils.h"
+#else
+#include <Arduino.h>
+#endif
 
 class PathPoint
 {
