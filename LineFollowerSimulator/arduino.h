@@ -28,7 +28,7 @@ public:
     template<typename T>
     void print(T val, int flag){
         if(flag == BIN){
-            std::cout << std::bitset<32>(val);
+            std::cout << std::bitset<8>(val);
         }
         // ... not handling other flags yet
     }
