@@ -1,5 +1,5 @@
 /* 
-*	Version 1 Arduino code for Lab 3 of POE Fall 2016 as taught at Olin College
+*	Version 2 Arduino code for Lab 3 of POE Fall 2016 as taught at Olin College
 *	This code attempts to follow the line while recording (and eventually being able to play back) a motion path.
 *
 *	Authors: Eric Miller (eric@legoaces.org) and Jamie Cho (yoonyoung.cho@students.olin.edu)
@@ -43,10 +43,9 @@ long lastActionTime;
 
 byte state = 1;
 const byte STATE_STOP = 0;
-const byte STATE_FOLLOWING = 1;
+const byte STATE_MEMORIZE = 1;
 const byte STATE_REPLAY = 2;
 
-byte lastState = state;
 
 int leftPower = 0, rightPower = 0; // range -255...255
 
@@ -110,46 +109,39 @@ void loop()
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
 
-		if(state == STATE_FOLLOWING){
+		robotPose.odometryUpdate(leftPower, rightPower, dt);
+
+		if(state == STATE_MEMORIZE){
 			//Serial.println(lineOffset(leftAvg, rightAvg));
-			lineFollowPid(leftAvg, rightAvg);
-
-			currentPath->attemptUpdate( &robotPose );
-		
-			if(loopCount % 100 == 0){
-				writePoseSerial();
-			}
+			memorizeLine(leftAvg, rightAvg);
 			
-			lastState = state;
+			if(state == STATE_REPLAY){
+				// The memorizeLine function decided to change to STATE_REPLAY
 
-			if(robotPose.distAlong > 100){
 				Serial.println("finished course, replaying.");
 
+				stop();
 
-				leftPower = 0;
-				rightPower = 0;
-				driveMotors();
-
-				currentPath->writeOut();
+				for(int i=0; i<numPaths; i++){
+					Serial.println(i);
+					paths[i]->writeOut();
+				}
 
 				delay(3000);
 
-			    state = STATE_REPLAY;
+				currentPathId = 0;
+				currentPath = paths[0];
+
+				robotPose.reset();
 			}
 			
 		}else if(state == STATE_REPLAY){
-			if (lastState != STATE_REPLAY){
-				Serial.println("Odometry reset");
-				robotPose.reset();
-			}
 
-		    lineReplay(leftAvg, rightAvg);
+			reciteLine(leftAvg, rightAvg);
 			
 			if(loopCount % 100 == 0){
 				writePoseSerial();
 			}
-			
-			lastState = state;
 
 			if(robotPose.distAlong > 100){
 				Serial.println("finished replay, stopping.");
@@ -158,15 +150,10 @@ void loop()
 			}
 
 		}else{
-			leftPower = 0;
-			rightPower = 0;
-			
-			lastState = state;
+			stop();
 		}
 
 		driveMotors();
-
-		robotPose.odometryUpdate(leftPower, rightPower, dt);
 
 
 		// This code intentionally refuses to run every 10th loop to prevent feeding badly
@@ -191,9 +178,9 @@ void loop()
 }
 
 // Implements non-blocking bang-bang control of motors.
-void lineFollowPid(float leftAvg, float rightAvg)
+void memorizeLine(float leftAvg, float rightAvg)
 {
-	float error = lineOffset(leftAvg, rightAvg, false);
+	float error = lineOffset(leftAvg, rightAvg, currentPath->useLeftSensor);
 	PIDerror = error;
 
 	pid.Compute();
@@ -205,9 +192,35 @@ void lineFollowPid(float leftAvg, float rightAvg)
 	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
 
 	normalizePowers(&leftPower, &rightPower, 255);
+
+	// Reading from sensor off of the line
+	float offReading = lineOffset(leftAvg, rightAvg, !currentPath->useLeftSensor);
+
+	if (offReading > 0 || robotPose.distAlong > 200){
+		// The robot's off-line sensor has seen a line
+		stop();
+		delay(1000);
+		robotPose.reset();
+
+		if(currentPathId < numPaths - 1){
+		    currentPathId++;
+		    currentPath = paths[currentPathId];
+		}else{
+			state = STATE_REPLAY;
+		}
+
+	}else{
+		// The robot is still following normally
+		currentPath->attemptUpdate( &robotPose );
+	}
+
+
+	if(loopCount % 100 == 0){
+		writePoseSerial();
+	}
 }
 
-void lineReplay(float leftAvg, float rightAvg) {
+void reciteLine(float leftAvg, float rightAvg) {
 	PathPoint *target = currentPath->getPoint(robotPose.distAlong);
 
 	// error is positive if the path is left of the robot
@@ -257,14 +270,8 @@ void normalizePowers(int *left, int *right, int limit){
 	}
 }
 
-// Returns the estimated offset of the robot from the line, with 
-// positive values indicating that the robot is right of the line
-// and negative values indicating the robot is left of the line.
-// Inputs are raw readings from left and right sensors, 0...1023
-//
-// Currently the returned value is dimensionless, and
-// represents only the data derivable from the immediate sensor
-// readings.
+// Returns how much the selected sensor is on the line, with
+// -1 reflecting "completely on" and 1 meaning "completely  off"
 float lineOffset(float leftAvg, float rightAvg, bool useLeftSensor)
 {
 	float sensorVal = useLeftSensor ? leftAvg : rightAvg;
@@ -311,6 +318,12 @@ void writeTuningsSerial()
 	Serial.print(", ");
 	Serial.print(kd);
 	Serial.print(")\n");
+}
+
+void stop(){
+	leftPower = 0;
+	rightPower = 0;
+	driveMotors();
 }
 
 void driveMotors(){
