@@ -31,8 +31,8 @@ const int MAX_SENSOR = 800;
 const double FOLLOW_MULTIPLIER = 1.5;
 
 // Pin setup (must match hardware)
-const byte leftSensorPin  = A1;
-const byte rightSensorPin = A0;
+const byte leftSensorPin  = A0;
+const byte rightSensorPin = A1;
 
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 Adafruit_DCMotor *leftMotor  = AFMS.getMotor(1);

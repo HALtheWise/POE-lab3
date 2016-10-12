@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 class Pose
 {
 public:
