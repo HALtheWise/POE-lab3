@@ -137,7 +137,7 @@ void loop()
 			
 		}else if(state == STATE_REPLAY){
 
-			reciteLine(leftAvg, rightAvg);
+			replayLine(leftAvg, rightAvg);
 			
 			if(loopCount % 100 == 0){
 				writePoseSerial();
@@ -171,6 +171,9 @@ void loop()
 		// without causing hyperactive behavior if something blocks for a while.
 		lastActionTime = lastActionTime + LOOP_DURATION*int(dt / LOOP_DURATION);
 
+		// If something messed up such that this loop took ridiculously long, prevent
+		// massive values of dt next time through the loop.
+		// This happens during state transitions sometimes.
 		if (millis() - lastActionTime > 500) {
 			lastActionTime = millis();
 		}
@@ -180,7 +183,9 @@ void loop()
 // Implements non-blocking bang-bang control of motors.
 void memorizeLine(float leftAvg, float rightAvg)
 {
-	float error = lineOffset(leftAvg, rightAvg, currentPath->useLeftSensor);
+	bool useLeftSensor = currentPath->useLeftSensor;
+	
+	float error = lineOffset(leftAvg, rightAvg, useLeftSensor);
 	PIDerror = error;
 
 	pid.Compute();
@@ -194,7 +199,7 @@ void memorizeLine(float leftAvg, float rightAvg)
 	normalizePowers(&leftPower, &rightPower, 255);
 
 	// Reading from sensor off of the line
-	float offReading = lineOffset(leftAvg, rightAvg, !currentPath->useLeftSensor);
+	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
 	if (offReading > 0 || robotPose.distAlong > 200){
 		// The robot's off-line sensor has seen a line
@@ -220,10 +225,13 @@ void memorizeLine(float leftAvg, float rightAvg)
 	}
 }
 
-void reciteLine(float leftAvg, float rightAvg) {
+void replayLine(float leftAvg, float rightAvg) {
+	bool useLeftSensor = currentPath->useLeftSensor;
+
 	PathPoint *target = currentPath->getPoint(robotPose.distAlong);
 
 	// error is positive if the path is left of the robot
+	// TODO: Handle intentional offsets from sensor feedback
 	double pathError = byte(target->wrappedAngle - byte(robotPose.angleFrom));
 	if(pathError > 127){
 	    pathError = pathError - 256;
@@ -231,7 +239,7 @@ void reciteLine(float leftAvg, float rightAvg) {
 	pathError /= 255;
 
 
-	double lineError = lineOffset(leftAvg, rightAvg, currentPath->useLeftSensor);
+	double lineError = lineOffset(leftAvg, rightAvg, useLeftSensor);
 	PIDerror = lineError;
 
 	pid.Compute();
