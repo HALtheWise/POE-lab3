@@ -42,10 +42,10 @@ void PathPoint::setSpeed( byte speed ){
 class Path
 {
 public:
-	Path();
+	Path(int length, bool useLeft);
 
-	PathPoint points[200];
-	const int allocatedPoints = 200;
+	PathPoint *points;
+	int allocatedPoints = 0;
 	int usedPoints = 0;
 
 	bool useLeftSensor = false;
@@ -55,7 +55,13 @@ public:
 	PathPoint *getPoint( double distAlong );
 };
 
-Path::Path(){
+Path::Path(int length, bool useLeft){
+	useLeftSensor = useLeft;
+
+	allocatedPoints = length;
+
+	points = malloc(sizeof(PathPoint) * length);
+
 	for (int i = 0; i < allocatedPoints; ++i)
 	{
 		points[i] = PathPoint();

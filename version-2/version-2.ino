@@ -65,12 +65,12 @@ int leftPower = 0, rightPower = 0; // range -255...255
 
 Pose robotPose;
 
-Path path1;
-Path path2;
-Path path3;
+Path path1(200, false);
+Path path2(100, true);
+Path path3(500, false);
 
 Path *paths[] = {&path1, &path2, &path3};
-const byte numPaths = 1;
+const byte numPaths = 2;
 byte currentPathId = 0;
 
 Path *currentPath = paths[currentPathId];
