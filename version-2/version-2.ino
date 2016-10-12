@@ -22,13 +22,13 @@
 
 const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
 
-const int FORWARD_POWER = 18; // 0...255
-const int TURN_POWER = 18; // 0...255
+const int FORWARD_POWER = 25; // 0...255
+const int TURN_POWER = 25; // 0...255
 
 const int MIN_SENSOR = 300;
 const int MAX_SENSOR = 800;
 
-const double FOLLOW_MULTIPLIER = 2.0;
+const double FOLLOW_MULTIPLIER = 1.5;
 
 // Pin setup (must match hardware)
 const byte leftSensorPin  = A1;
@@ -50,8 +50,19 @@ byte lastState = state;
 
 int leftPower = 0, rightPower = 0; // range -255...255
 
+// Declare and allocate robot pose and paths
+
 Pose robotPose;
+
 Path path1;
+Path path2;
+Path path3;
+
+Path *paths[] = {&path1, &path2, &path3};
+const byte numPaths = 3;
+byte currentPathId = 0;
+
+Path *currentPath = paths[currentPathId];
 
 // Setup PID controller
 double PIDerror=0, PIDsetpoint=0, PIDoutput;
@@ -103,7 +114,7 @@ void loop()
 			//Serial.println(lineOffset(leftAvg, rightAvg));
 			lineFollowPid(leftAvg, rightAvg);
 
-			path1.attemptUpdate( &robotPose );
+			currentPath->attemptUpdate( &robotPose );
 		
 			if(loopCount % 100 == 0){
 				writePoseSerial();
@@ -119,7 +130,7 @@ void loop()
 				rightPower = 0;
 				driveMotors();
 
-				path1.writeOut();
+				currentPath->writeOut();
 
 				delay(3000);
 
@@ -132,7 +143,7 @@ void loop()
 				robotPose.reset();
 			}
 
-		    lineReplay(&path1, leftAvg, rightAvg);
+		    lineReplay(leftAvg, rightAvg);
 			
 			if(loopCount % 100 == 0){
 				writePoseSerial();
@@ -182,7 +193,7 @@ void loop()
 // Implements non-blocking bang-bang control of motors.
 void lineFollowPid(float leftAvg, float rightAvg)
 {
-	float error = lineOffset(leftAvg, rightAvg);
+	float error = lineOffset(leftAvg, rightAvg, false);
 	PIDerror = error;
 
 	pid.Compute();
@@ -196,8 +207,8 @@ void lineFollowPid(float leftAvg, float rightAvg)
 	normalizePowers(&leftPower, &rightPower, 255);
 }
 
-void lineReplay(Path *path, float leftAvg, float rightAvg) {
-	PathPoint *target = path->getPoint(robotPose.distAlong);
+void lineReplay(float leftAvg, float rightAvg) {
+	PathPoint *target = currentPath->getPoint(robotPose.distAlong);
 
 	// error is positive if the path is left of the robot
 	double pathError = byte(target->wrappedAngle - byte(robotPose.angleFrom));
@@ -207,7 +218,7 @@ void lineReplay(Path *path, float leftAvg, float rightAvg) {
 	pathError /= 255;
 
 
-	double lineError = lineOffset(leftAvg, rightAvg, path->useLeftSensor);
+	double lineError = lineOffset(leftAvg, rightAvg, currentPath->useLeftSensor);
 	PIDerror = lineError;
 
 	pid.Compute();
@@ -254,7 +265,7 @@ void normalizePowers(int *left, int *right, int limit){
 // Currently the returned value is dimensionless, and
 // represents only the data derivable from the immediate sensor
 // readings.
-float lineOffset(float leftAvg, float rightAvg, bool useLeftSensor = false)
+float lineOffset(float leftAvg, float rightAvg, bool useLeftSensor)
 {
 	float sensorVal = useLeftSensor ? leftAvg : rightAvg;
 	return map(sensorVal, MIN_SENSOR, MAX_SENSOR, -100, 100) / 100.0;

@@ -44,8 +44,8 @@ class Path
 public:
 	Path();
 
-	PathPoint points[100];
-	const int allocatedPoints = 100;
+	PathPoint points[200];
+	const int allocatedPoints = 200;
 	int usedPoints = 0;
 
 	bool useLeftSensor = false;

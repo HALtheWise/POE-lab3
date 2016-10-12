@@ -40,8 +40,8 @@ double adjustPower( int power ){
 void Pose::odometryUpdate( int leftPower, int rightPower, int timestep) {
 	double leftPowerFrac  = adjustPower(leftPower);
 	double rightPowerFrac = adjustPower(rightPower);
-	double forwardSpeed = (leftPower + rightPower) / 2 * MAX_FORWARD_SPEED;
-	double turnSpeed = (rightPower - leftPower) / 2 * MAX_TURN_SPEED;
+	double forwardSpeed = (leftPowerFrac + rightPowerFrac) / 2 * MAX_FORWARD_SPEED;
+	double turnSpeed = (rightPowerFrac - leftPowerFrac) / 2 * MAX_TURN_SPEED;
 
 	distAlong += forwardSpeed * timestep / 1000.0;
 	angleFrom += turnSpeed * timestep / 1000.0;
