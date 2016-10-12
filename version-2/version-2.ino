@@ -204,7 +204,7 @@ void memorizeLine(float leftAvg, float rightAvg)
 	pid.Compute();
 
 	// whether the robot will turn right or left (positive is right)
-	float turnFactor = PIDoutput;
+	float turnFactor = -PIDoutput;
 
 	// Step 2: constrain that error to make sure the robot doesn't turn (much) toward the line
 	if(useLeftSensor){
@@ -225,7 +225,7 @@ void memorizeLine(float leftAvg, float rightAvg)
 
 	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
-	if (offReading > 0 || robotPose.distAlong > MAX_PATH_LENGTH){
+	if (offReading > 0.5 || robotPose.distAlong > MAX_PATH_LENGTH){
 		// The robot's off-line sensor has seen a line
 		Serial.println("segment end detected");
 
@@ -279,7 +279,7 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 
 	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
-	if (offReading > 0 || robotPose.distAlong > MAX_PATH_LENGTH){
+	if (offReading > 0.5 || robotPose.distAlong > MAX_PATH_LENGTH){
 		// The robot's off-line sensor has seen a line
 		Serial.println("segment end detected");
 

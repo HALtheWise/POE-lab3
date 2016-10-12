@@ -20,10 +20,9 @@ Eric :
 - [x] Record line-followed path
 - [x] Play back recorded path losslessly
 - [x] Hybridize path following and line following
-- [ ] Properly handle left-biased and right-biased following
+- [x] Properly handle left-biased and right-biased following
 - [ ] Make framework for segmented paths (using turns as odometry resets)
 - [x] Build state machine in code for handling training/replaying
-- [ ] Precompile known path into memory for competition
 
 
 # IR Reflectance Sensor Wiring Diagram
