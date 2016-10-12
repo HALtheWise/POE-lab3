@@ -15,8 +15,10 @@
 
 #include <PID_v1.h>
 
+#ifndef __AVR__
 #include "arduino.h"
 #include "pid.h"
+#endif
 
 // Include path management code
 #include "odometry.h"

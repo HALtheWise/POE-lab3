@@ -1,5 +1,10 @@
 #include "paths.h"
 
+#ifdef __AVR__
+#include <Arduino.h>
+#endif
+
+
 PathPoint::PathPoint( void ){
     flags = 0x0e; // Full speed, on line
     wrappedAngle = 0;
