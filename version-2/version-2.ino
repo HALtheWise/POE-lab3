@@ -1,8 +1,6 @@
 /* 
 *	Version 1 Arduino code for Lab 3 of POE Fall 2016 as taught at Olin College
-*	This code demonstrates reading the sensor values and controlling the motors
-*	using a pretty simple PID control scheme. 
-*	This is not intended to be final code, but merely a proof of concept.
+*	This code attempts to follow the line while recording (and eventually being able to play back) a motion path.
 *
 *	Authors: Eric Miller (eric@legoaces.org) and Jamie Cho (yoonyoung.cho@students.olin.edu)
 */
@@ -16,13 +14,21 @@
 
 #include <PID_v1.h>
 
+// Include path management code
+#include "odometry.h"
+#include "paths.h"
+
 // Controlling constants
 
 const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
 
-const int FORWARD_POWER = 20; // 0...255
-const int TURN_POWER = 20; // 0...255
+const int FORWARD_POWER = 18; // 0...255
+const int TURN_POWER = 18; // 0...255
 
+const int MIN_SENSOR = 300;
+const int MAX_SENSOR = 800;
+
+const double FOLLOW_MULTIPLIER = 2.0;
 
 // Pin setup (must match hardware)
 const byte leftSensorPin  = A1;
@@ -34,6 +40,18 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 
 // Global variable setup (things that change each loop)
 long lastActionTime;
+
+byte state = 1;
+const byte STATE_STOP = 0;
+const byte STATE_FOLLOWING = 1;
+const byte STATE_REPLAY = 2;
+
+byte lastState = state;
+
+int leftPower = 0, rightPower = 0; // range -255...255
+
+Pose robotPose;
+Path path1;
 
 // Setup PID controller
 double PIDerror=0, PIDsetpoint=0, PIDoutput;
@@ -60,6 +78,8 @@ long totalLeft = 0;
 long totalRight = 0;
 int count = 0;
 
+int loopCount = 0;
+
 void loop()
 {
 	handleIncomingSerial();
@@ -72,29 +92,94 @@ void loop()
 	totalRight += rightRead;
 	count++;
 
-	// Every (configurable) milliseconds, average together the readings recieved and transmit them
-	long time = millis();
-	if (time - lastActionTime > LOOP_DURATION) {
+	// Every (configurable) milliseconds, average together the readings recieved and handle them
+	int dt = millis() - lastActionTime;
+
+	if (dt > LOOP_DURATION) {
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
 
-		Serial.print(lineOffset(leftAvg, rightAvg));
-		Serial.print("\t");
-		Serial.println(PIDoutput);
+		if(state == STATE_FOLLOWING){
+			//Serial.println(lineOffset(leftAvg, rightAvg));
+			lineFollowPid(leftAvg, rightAvg);
 
-		lineFollowPid(leftAvg, rightAvg);		
+			path1.attemptUpdate( &robotPose );
+		
+			if(loopCount % 100 == 0){
+				writePoseSerial();
+			}
+			
+			lastState = state;
+
+			if(robotPose.distAlong > 100){
+				Serial.println("finished course, replaying.");
+
+
+				leftPower = 0;
+				rightPower = 0;
+				driveMotors();
+
+				path1.writeOut();
+
+				delay(3000);
+
+			    state = STATE_REPLAY;
+			}
+			
+		}else if(state == STATE_REPLAY){
+			if (lastState != STATE_REPLAY){
+				Serial.println("Odometry reset");
+				robotPose.reset();
+			}
+
+		    lineReplay(&path1, leftAvg, rightAvg);
+			
+			if(loopCount % 100 == 0){
+				writePoseSerial();
+			}
+			
+			lastState = state;
+
+			if(robotPose.distAlong > 100){
+				Serial.println("finished replay, stopping.");
+
+			    state = STATE_STOP;
+			}
+
+		}else{
+			leftPower = 0;
+			rightPower = 0;
+			
+			lastState = state;
+		}
+
+		driveMotors();
+
+		robotPose.odometryUpdate(leftPower, rightPower, dt);
+
+
+		// This code intentionally refuses to run every 10th loop to prevent feeding badly
+		if(dt > LOOP_DURATION * 2 && loopCount % 10){
+		    Serial.print("WARNING: Main loop running too slow: ");
+		    Serial.println(dt);
+		}
 
 		// Reset counting variables
 		totalRight = totalLeft = 0;
 		count = 0;
+		loopCount++;
 
 		// This formulation attempts to ensure average loop duration is LOOP_DURATION,
 		// without causing hyperactive behavior if something blocks for a while.
-		lastActionTime = lastActionTime + LOOP_DURATION*int((time-lastActionTime) / LOOP_DURATION);
+		lastActionTime = lastActionTime + LOOP_DURATION*int(dt / LOOP_DURATION);
+
+		if (millis() - lastActionTime > 500) {
+			lastActionTime = millis();
+		}
 	}
 }
 
-// Implements non-blocking PID control of motors.
+// Implements non-blocking bang-bang control of motors.
 void lineFollowPid(float leftAvg, float rightAvg)
 {
 	float error = lineOffset(leftAvg, rightAvg);
@@ -105,12 +190,46 @@ void lineFollowPid(float leftAvg, float rightAvg)
 	// whether the robot will turn right or left (positive is right)
 	float turnFactor = PIDoutput;
 
-	int leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
-	int rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
+	leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
+	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
 
 	normalizePowers(&leftPower, &rightPower, 255);
+}
 
-	driveMotors(leftPower, rightPower);
+void lineReplay(Path *path, float leftAvg, float rightAvg) {
+	PathPoint *target = path->getPoint(robotPose.distAlong);
+
+	// error is positive if the path is left of the robot
+	double pathError = byte(target->wrappedAngle - byte(robotPose.angleFrom));
+	if(pathError > 127){
+	    pathError = pathError - 256;
+	}
+	pathError /= 255;
+
+
+	double lineError = lineOffset(leftAvg, rightAvg);
+	PIDerror = lineError;
+
+	pid.Compute();
+
+
+	// whether the robot will turn right or left (positive is right)
+	double turnFactor = -pathError * 30 + PIDoutput * 0.3;
+
+	leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
+	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
+
+	leftPower 	*= FOLLOW_MULTIPLIER;
+	rightPower 	*= FOLLOW_MULTIPLIER;
+
+	if(loopCount % 50 == 0){
+	    Serial.print("pathError = ");
+	    Serial.print(pathError);
+	    Serial.print("\t:\t");
+	    Serial.println(turnFactor);
+	}
+
+	normalizePowers(&leftPower, &rightPower, 255);
 }
 
 // normalizePowers ensures that 
@@ -122,8 +241,8 @@ void normalizePowers(int *left, int *right, int limit){
 	int maxabs = max(abs(*left), abs(*right));
 	if(maxabs > limit)
 	{
-	    *left = *left * (limit / maxabs);
-	    *right = *right * (limit / maxabs);
+	    *left = (*left * limit) / maxabs;
+	    *right = (*right * limit) / maxabs;
 	}
 }
 
@@ -137,7 +256,7 @@ void normalizePowers(int *left, int *right, int limit){
 // readings.
 float lineOffset(float leftAvg, float rightAvg)
 {
-	return map(leftAvg, 780, 880, -100, 100) / 100.0;
+	return map(rightAvg, MIN_SENSOR, MAX_SENSOR, -100, 100) / 100.0;
 	//return rightAvg - leftAvg;
 }
 
@@ -160,11 +279,17 @@ void handleIncomingSerial()
 		}
 
 		pid.SetTunings(kp, ki, kd);
-		writeSerial();
+		writeTuningsSerial();
 	}
 }
 
-void writeSerial()
+void writePoseSerial(){
+	Serial.print("Pose is: \t");
+	robotPose.writeOut();
+	Serial.println();
+}
+
+void writeTuningsSerial()
 {
 	Serial.println("Tunings set to (kp, ki, kd) = ");
 	Serial.print("\t(");
@@ -176,7 +301,7 @@ void writeSerial()
 	Serial.print(")\n");
 }
 
-void driveMotors(int leftPower, int rightPower){
+void driveMotors(){
 	// Inputs leftPower and rightPower vary from -255...255
 	// Code in this function is based on https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/using-dc-motors
 
