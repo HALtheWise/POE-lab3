@@ -8,8 +8,10 @@
 #include <QFileDialog>
 
 #include "utils.h"
+
 #include "route.h"
 #include "robot.h"
+
 
 namespace Ui {
 class MainWindow;
@@ -21,11 +23,11 @@ class MainWindow : public QMainWindow
 private:
     QGraphicsScene scene;
 
-    Route route;
-    Robot robot;
+    //Route route;
+    //Robot robot;
 
     int timerId;
-    bool auto_control; //
+    bool auto_control;
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();

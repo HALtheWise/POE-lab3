@@ -24,7 +24,9 @@ extern const float IR_FOV; // in radians
 
 extern float i2c(float in); // inches to cm
 extern float c2p(float cm); // cm 2 pxl
+
 extern float min(float a, float b); //minimum of a,b
+extern float max(float a, float b); //maximum of a,b
 
 extern float d2r(float d); //degress to radians
 extern float r2d(float r); //radians to degrees

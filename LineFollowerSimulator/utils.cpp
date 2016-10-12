@@ -35,6 +35,10 @@ float min(float a, float b){
     return a<b?a:b;
 }
 
+float max(float a, float b){
+    return a>b?a:b;
+}
+
 float d2r(float d){
     return d / 180. * M_PI;
 }
@@ -70,3 +74,5 @@ std::ostream& operator<<(std::ostream& os, QPointF p){
     os << "(" << p.x() << "," << p.y() << ")";
     return os;
 }
+
+typedef unsigned char byte;

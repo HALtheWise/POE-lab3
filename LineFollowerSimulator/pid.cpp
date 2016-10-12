@@ -1,5 +1,6 @@
 #include "pid.h"
 
+#ifdef _USE_MY_PID_
 
 PID::PID(float k_p, float k_i, float k_d, float o_min, float o_max):
     k_p(k_p), k_i(k_i), k_d(k_d), o_min(o_min), o_max(o_max)
@@ -19,3 +20,5 @@ float PID::compute(float err){
 void PID::set(float p, float i, float d){
     k_p = p, k_i = i, k_d = d;
 }
+
+#endif

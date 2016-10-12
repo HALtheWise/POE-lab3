@@ -54,12 +54,19 @@ public:
     void update();
     void move(float delta, float dtheta);
     void setVelocity(float left, float right);
+
+    void setPowerR(int r);
+    void setPowerL(int l);
+
     void setVelocityR(float r);
     void setVelocityL(float l);
+
     void setIRHeight(float h);
 
     void sense(QImage& img);
     void setVisible(bool visible);
 };
+
+extern Robot* robot;
 
 #endif // ROBOT_H

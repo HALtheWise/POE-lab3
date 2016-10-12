@@ -3,6 +3,8 @@
 #include "utils.h"
 #include "pid.h"
 
+#include "arduino.h"
+
 #include <iostream>
 
 #include <QGraphicsPolygonItem>
@@ -13,7 +15,7 @@
 
 QImage image(PXL_DIMS,PXL_DIMS,QImage::Format_ARGB32);
 
-PID pid(10.0,0.0,0.0,-5.0, 5.0); // k_p, k_i, k_d, o_min, o_max
+//PID pid(10.0,0.0,0.0,-5.0, 5.0); // k_p, k_i, k_d, o_min, o_max
 
 //essentially we have 5 parameters:
 // k_p, k_i, k_d, FORWARD_POWER and TURN_POWER
@@ -21,9 +23,11 @@ PID pid(10.0,0.0,0.0,-5.0, 5.0); // k_p, k_i, k_d, o_min, o_max
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     scene(new QGraphicsScene(0,0,PXL_DIMS,PXL_DIMS,this)),
-    robot(scene, QPointF(PXL_DIMS/2,PXL_DIMS/2),0.0, QPointF(IR_OFFSETX, IR_OFFSETY), IR_HEIGHT, IR_FOV),
     ui(new Ui::MainWindow)
 {
+    robot = new Robot(scene, QPointF(PXL_DIMS/2,PXL_DIMS/2),0.0, QPointF(IR_OFFSETX, IR_OFFSETY), IR_HEIGHT, IR_FOV);
+    route = new Route();
+
     auto_control = false;
     ui->setupUi(this);
     ui->graphicsView->setScene(&scene);
@@ -38,7 +42,9 @@ MainWindow::MainWindow(QWidget *parent) :
     resetRoute(10);
     resetRobot();
 
-    scene.addItem(&route.poly_item);
+    scene.addItem(&route->poly_item);
+
+    setup(); // begin arduino
 
     timerId = startTimer(DT * 1000 / SIMULATION_ACCELARATION);// DT in sec
 }
@@ -52,18 +58,18 @@ MainWindow::~MainWindow()
 void MainWindow::resetRoute(int n){
     if(n >= 3){
         //somehow validator didn't work...?
-        route.reset(n);
+        route->reset(n);
     }
 }
 
 void MainWindow::resetRoute(){
     int n = ui->n_routes_spin->value();
     resetRoute(n);
-    robot.reset(route.poly);
+    robot->reset(route->poly);
 }
 
 void MainWindow::resetRobot(){
-    robot.reset(route.poly);
+    robot->reset(route->poly);
 }
 
 
@@ -75,17 +81,17 @@ void MainWindow::senseRobot(){
     QRectF area(0,0,PXL_DIMS,PXL_DIMS);
 
     // be invisible so that it doesn't detect itself
-    robot.setVisible(false);
+    robot->setVisible(false);
     scene.render(&painter,area,area);
-    robot.setVisible(true);
+    robot->setVisible(true);
 
     painter.end();
-    robot.sense(image);
+    robot->sense(image);
 
-    ui->ir_left_edit->setText(QString::number(robot.ir_val_l));
-    ui->ir_right_edit->setText(QString::number(robot.ir_val_r));
+    ui->ir_left_edit->setText(QString::number(robot->ir_val_l));
+    ui->ir_right_edit->setText(QString::number(robot->ir_val_r));
 
-    //std::cout << "IR VALUE : LEFT {" << robot.ir_val_l << "} , RIGHT {" << robot.ir_val_r << '}' << std::endl;
+    //std::cout << "IR VALUE : LEFT {" << robot->ir_val_l << "} , RIGHT {" << robot->ir_val_r << '}' << std::endl;
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent *event){
@@ -115,37 +121,35 @@ void MainWindow::timerEvent(QTimerEvent *){
     senseRobot();
 
     if(auto_control){
+        loop();
 
-        // autonomy control node goes here
+        /*// autonomy control node goes here
 
         const int FORWARD_POWER = 40; // 0...255
         const int TURN_POWER = 40; // 0...255
 
-        float err = robot.ir_val_l - robot.ir_val_r;
-        //float turnFactor = err > 0? 1 : -1;
-        float turnFactor = pid.compute(err);
+        float err = robot->ir_val_l - robot->ir_val_r;
+        float turnFactor = err > 0? 1 : -1;
+        //float turnFactor = pid.compute(err);
         //std::cout << turnFactor << std::endl;
         int leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
         int rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
 
         ui->l_pow_slider->setValue(leftPower);
         ui->r_pow_slider->setValue(rightPower);
+        */
     }
 
-    robot.update();
+    robot->update();
 
 }
 
 void MainWindow::setRightPower(int pow){
-    // convert power to velocity
-    // then convert it back to pixel units
-    robot.setVelocityR(c2p(pow2vel(pow)));
+    robot->setPowerR(pow);
 }
 
 void MainWindow::setLeftPower(int pow){
-    // convert power to velocity
-    // then convert it back to pixel units
-    robot.setVelocityL(c2p(pow2vel(pow)));
+    robot->setPowerL(pow);
 }
 
 void MainWindow::resetPower(){
@@ -157,7 +161,7 @@ void MainWindow::resetPower(){
 
 
 void MainWindow::setIRHeight(int h){
-    robot.setIRHeight(c2p(h / 10.0)); // scaling factor for slider
+    robot->setIRHeight(c2p(h / 10.0)); // scaling factor for slider
 }
 
 void MainWindow::setAuto(bool a){
@@ -187,7 +191,7 @@ void MainWindow::saveRoute(){
         fileName.append(".txt");
     }
 
-    route.save(fileName);
+    route->save(fileName);
 }
 
 void MainWindow::loadRoute(){
@@ -195,6 +199,6 @@ void MainWindow::loadRoute(){
     QString fileName = QFileDialog::getOpenFileName(this,
         tr("Load Route"), "", filter);
     if(fileName != ""){
-        route.load(fileName);
+        route->load(fileName);
     }
 }

@@ -29,4 +29,6 @@ public:
     void load(const QString& filename);
 };
 
+extern Route* route;
+
 #endif // ROUTE_H

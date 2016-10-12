@@ -1,6 +1,7 @@
 #ifndef PID_H
 #define PID_H
 
+#ifdef _USE_MY_PID_
 #include "utils.h"
 
 struct PID
@@ -17,5 +18,6 @@ public:
     void set(float,float,float);
     PID(float k_p, float k_i, float k_d, float o_min = 0.0, float o_max = 1.0);
 };
+#endif
 
 #endif // PID_H

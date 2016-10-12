@@ -5,6 +5,7 @@
 const double R_MIN = PXL_DIMS/8;
 const double R_MAX = PXL_DIMS/2;
 
+Route* route;
 
 Route::Route()
 {

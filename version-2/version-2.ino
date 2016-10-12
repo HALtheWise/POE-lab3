@@ -8,15 +8,33 @@
 #include <stdlib.h>
 
 // Imports for Motor Shield, taken from https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/using-dc-motors
-#include <Wire.h>
+
+//#include <Wire.h>
 #include <Adafruit_MotorShield.h>
-#include "utility/Adafruit_MS_PWMServoDriver.h"
+//#include "utility/Adafruit_MS_PWMServoDriver.h"
 
 #include <PID_v1.h>
+
+#include "arduino.h"
+#include "pid.h"
 
 // Include path management code
 #include "odometry.h"
 #include "paths.h"
+
+
+
+/* FORWARD DECLARATIONS */
+
+void lineFollowPid(float leftAvg, float rightAvg);
+void lineReplay(Path *path, float leftAvg, float rightAvg);
+void normalizePowers(int *left, int *right, int limit);
+float lineOffset(float leftAvg, float rightAvg);
+void writePoseSerial();
+void writeTuningsSerial();
+void driveMotors();
+void getMeasurements(int *leftRead, int *rightRead);
+
 
 // Controlling constants
 
@@ -31,6 +49,7 @@ const int MAX_SENSOR = 800;
 const double FOLLOW_MULTIPLIER = 2.0;
 
 // Pin setup (must match hardware)
+
 const byte leftSensorPin  = A1;
 const byte rightSensorPin = A0;
 
@@ -82,7 +101,7 @@ int loopCount = 0;
 
 void loop()
 {
-	handleIncomingSerial();
+    //handleIncomingSerial(); TODO : Implement Serial input interface as well ... some time in the future
 
 	int leftRead = 0;
 	int rightRead = 0;
@@ -92,9 +111,8 @@ void loop()
 	totalRight += rightRead;
 	count++;
 
-	// Every (configurable) milliseconds, average together the readings recieved and handle them
+    // Every (configurable) milliseconds, average together the readings received and handle them
 	int dt = millis() - lastActionTime;
-
 	if (dt > LOOP_DURATION) {
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
@@ -111,9 +129,9 @@ void loop()
 			
 			lastState = state;
 
-			if(robotPose.distAlong > 100){
-				Serial.println("finished course, replaying.");
+            if(robotPose.distAlong > 800){ // ~ 8m ish
 
+				Serial.println("finished course, replaying.");
 
 				leftPower = 0;
 				rightPower = 0;
@@ -121,7 +139,7 @@ void loop()
 
 				path1.writeOut();
 
-				delay(3000);
+                //delay(3000); THIS IS CAUSING PROBLEMS, COMMENTING IT OUT FOR NOW. TODO : fix
 
 			    state = STATE_REPLAY;
 			}
@@ -140,7 +158,7 @@ void loop()
 			
 			lastState = state;
 
-			if(robotPose.distAlong > 100){
+            if(robotPose.distAlong > 800){
 				Serial.println("finished replay, stopping.");
 
 			    state = STATE_STOP;
@@ -238,8 +256,11 @@ void lineReplay(Path *path, float leftAvg, float rightAvg) {
 // Useful for constraining desired speeds to be
 // achievable by the motors.
 void normalizePowers(int *left, int *right, int limit){
+    Serial.print("L : "); Serial.print(*left); Serial.print(" R : "); Serial.println(*right);
+
 	int maxabs = max(abs(*left), abs(*right));
-	if(maxabs > limit)
+
+    if(maxabs > limit) // check against zero!
 	{
 	    *left = (*left * limit) / maxabs;
 	    *right = (*right * limit) / maxabs;
@@ -256,10 +277,11 @@ void normalizePowers(int *left, int *right, int limit){
 // readings.
 float lineOffset(float leftAvg, float rightAvg)
 {
-	return map(rightAvg, MIN_SENSOR, MAX_SENSOR, -100, 100) / 100.0;
-	//return rightAvg - leftAvg;
+    return map(rightAvg, MIN_SENSOR, MAX_SENSOR, -100, 100) / 100.0;
+    //return rightAvg - leftAvg;
 }
 
+/*
 void handleIncomingSerial()
 {
 	if(Serial.available() > 0){
@@ -282,6 +304,7 @@ void handleIncomingSerial()
 		writeTuningsSerial();
 	}
 }
+*/
 
 void writePoseSerial(){
 	Serial.print("Pose is: \t");

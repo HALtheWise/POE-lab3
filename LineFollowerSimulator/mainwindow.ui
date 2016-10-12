@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>798</width>
-    <height>622</height>
+    <height>701</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -289,6 +289,41 @@
      <property name="value">
       <double>1.000000000000000</double>
      </property>
+    </widget>
+   </widget>
+   <widget class="QSplitter" name="splitter_14">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>570</y>
+      <width>512</width>
+      <height>207</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+    <widget class="QSplitter" name="splitter_12">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QLabel" name="label_4">
+      <property name="text">
+       <string>Serial_in</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="plainTextEdit"/>
+    </widget>
+    <widget class="QSplitter" name="splitter_13">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <widget class="QLabel" name="label_7">
+      <property name="text">
+       <string>Serial_out</string>
+      </property>
+     </widget>
+     <widget class="QPlainTextEdit" name="plainTextEdit_2"/>
     </widget>
    </widget>
   </widget>

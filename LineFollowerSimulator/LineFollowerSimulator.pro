@@ -19,7 +19,12 @@ SOURCES += main.cpp\
     robot.cpp \
     utils.cpp \
     robotitem.cpp \
-    pid.cpp
+    pid.cpp \
+    ../version-2/odometry.cpp \
+    ../version-2/paths.cpp \
+    ../version-2/version-2.cpp \
+    PID_v1.cpp \
+    Adafruit_MotorShield.cpp
 
 HEADERS  += mainwindow.h \
     arduino.h \
@@ -27,7 +32,12 @@ HEADERS  += mainwindow.h \
     robot.h \
     utils.h \
     robotitem.h \
-    pid.h
+    pid.h \
+    ../version-2/odometry.h \
+    ../version-2/paths.h \
+    ../version-2/version-2.ino \
+    Adafruit_MotorShield.h \
+    PID_v1.h
 
 FORMS    += mainwindow.ui
 

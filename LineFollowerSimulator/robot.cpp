@@ -1,13 +1,14 @@
+#include "utils.h"
 #include "robot.h"
-#include <iostream>
 
+#include <iostream>
 
 // 1 pxl = .5 cm
 // 270 x 270 cm world
 
 // robot = 20x16 cm
 
-
+Robot* robot = nullptr;
 
 float coneRadius(float h, float fov){
     return h*tan(fov/2);
@@ -29,7 +30,11 @@ Robot::Robot(QGraphicsScene& scene, QPointF pos, float theta, QPointF irOffset, 
 }
 
 Robot::~Robot(){
-    delete body;
+    if(body){
+        delete body;
+
+        body = nullptr;
+    }
 }
 
 void Robot::reset(QPointF p, float t){
@@ -94,6 +99,20 @@ void Robot::setVelocityL(float v){
 void Robot::setVelocityR(float v){
     vel_r = v;
 }
+
+void Robot::setPowerL(int pow){
+    // convert power to velocity
+    // then convert it back to pixel units
+    setVelocityL(c2p(pow2vel(pow)));
+}
+
+
+void Robot::setPowerR(int pow){
+    // convert power to velocity
+    // then convert it back to pixel units
+    setVelocityR(c2p(pow2vel(pow)));
+}
+
 
 void Robot::setVelocity(float l, float r){
     setVelocityL(l);
