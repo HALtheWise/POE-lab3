@@ -18,13 +18,13 @@ Jamie :
 Eric :
 
 - [x] Build data structures for storing path data
-- [ ] Integrate motor characterization into kinematics model
+- [x] Integrate motor characterization into kinematics model
 - [x] Record line-followed path
 - [x] Play back recorded path losslessly
-- [ ] Hybridize path following and line following
+- [x] Hybridize path following and line following
+- [x] Properly handle left-biased and right-biased following
 - [ ] Make framework for segmented paths (using turns as odometry resets)
 - [x] Build state machine in code for handling training/replaying
-- [ ] Precompile known path into memory for competition
 
 
 # IR Reflectance Sensor Wiring Diagram
@@ -70,4 +70,10 @@ You may also adjust the height of your IR sensor to increase the size of your co
 
 #### Autonomy
 
+<<<<<<< HEAD
 You can toggle "autonomy" option, which will make the robot follow the route on itself!
+=======
+![IRReader](images/ir_reader.png)
+
+NOTE: motor wires should be connected such that, when viewed from the front, the wires cross and red is left
+>>>>>>> d7d36fa0ecb9550ea6de65403c869226f2a47a43

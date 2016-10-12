@@ -10,8 +10,9 @@
 
 const int averagingDuration = 200;
 
-const byte leftSensorPin = A1;
-const byte rightSensorPin = A0;
+// Pin setup (must match hardware)
+const byte leftSensorPin  = A0;
+const byte rightSensorPin = A1;
 // const byte leftMotorPin = 9;
 // const byte rightMotorPin = 10;
 

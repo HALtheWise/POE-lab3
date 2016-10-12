@@ -1,5 +1,5 @@
 /* 
-*	Version 1 Arduino code for Lab 3 of POE Fall 2016 as taught at Olin College
+*	Version 2 Arduino code for Lab 3 of POE Fall 2016 as taught at Olin College
 *	This code attempts to follow the line while recording (and eventually being able to play back) a motion path.
 *
 *	Authors: Eric Miller (eric@legoaces.org) and Jamie Cho (yoonyoung.cho@students.olin.edu)
@@ -40,18 +40,29 @@ void getMeasurements(int *leftRead, int *rightRead);
 
 const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
 
-const int FORWARD_POWER = 18; // 0...255
-const int TURN_POWER = 18; // 0...255
+const int FORWARD_POWER_INITIAL = 30; // 0...255
+const int TURN_POWER_INITIAL = 30; // 0...255
 
-const int MIN_SENSOR = 300;
-const int MAX_SENSOR = 800;
+const float OUTER_TURN_LIMIT = 0.2;
 
-const double FOLLOW_MULTIPLIER = 2.0;
+const int POWER_REPLAY = 40; // 0...255
+
+const double PATH_STEERING_RATE = .20; // Measured in fraction / degree, path-based replay steering constant.
+
+const double LINE_ANGLE_ADJUSTMENT_RATE = 50.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
+
+const int MIN_SENSOR_LEFT 	= 281;
+const int MAX_SENSOR_LEFT 	= 804;
+const int MIN_SENSOR_RIGHT	= 630;
+const int MAX_SENSOR_RIGHT 	= 880;
 
 // Pin setup (must match hardware)
 
 const byte leftSensorPin  = A1;
 const byte rightSensorPin = A0;
+
+const byte leftSensorPin  = A0;
+const byte rightSensorPin = A1;
 
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 Adafruit_DCMotor *leftMotor  = AFMS.getMotor(1);
@@ -62,15 +73,24 @@ long lastActionTime;
 
 byte state = 1;
 const byte STATE_STOP = 0;
-const byte STATE_FOLLOWING = 1;
+const byte STATE_MEMORIZE = 1;
 const byte STATE_REPLAY = 2;
 
-byte lastState = state;
 
 int leftPower = 0, rightPower = 0; // range -255...255
 
+// Declare and allocate robot pose and paths
+
 Pose robotPose;
-Path path1;
+
+Path path1(200, false);
+Path path2(100, true);
+
+Path *paths[] = {&path1, &path2};
+const byte numPaths = 2;
+byte currentPathId = 0;
+
+Path *currentPath = paths[currentPathId];
 
 // Setup PID controller
 double PIDerror=0, PIDsetpoint=0, PIDoutput;
@@ -89,8 +109,11 @@ void setup()
 	AFMS.begin();
 
 	pid.SetMode(AUTOMATIC);
-	pid.SetSampleTime(LOOP_DURATION);
+	pid.SetSampleTime(LOOP_DURATION - 2);
 	pid.SetOutputLimits(-1, 1);
+
+	stop();
+	delay(1000);
 }
 
 long totalLeft = 0;
@@ -117,45 +140,51 @@ void loop()
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
 
-		if(state == STATE_FOLLOWING){
+		robotPose.odometryUpdate(leftPower, rightPower, dt);
+
+		if(state == STATE_MEMORIZE){
 			//Serial.println(lineOffset(leftAvg, rightAvg));
-			lineFollowPid(leftAvg, rightAvg);
-
-			path1.attemptUpdate( &robotPose );
-		
-			if(loopCount % 100 == 0){
-				writePoseSerial();
-			}
+			memorizeLine(leftAvg, rightAvg);
 			
-			lastState = state;
+			if(state == STATE_REPLAY){
+				// The memorizeLine function decided to change to STATE_REPLAY
 
+<<<<<<< HEAD
             if(robotPose.distAlong > 100){ // ~ 8m ish
 
 				Serial.println("finished course, replaying.");
+=======
+				Serial.println("finished course, replaying.");
 
-				leftPower = 0;
-				rightPower = 0;
-				driveMotors();
+				stop();
+>>>>>>> d7d36fa0ecb9550ea6de65403c869226f2a47a43
 
-				path1.writeOut();
+				for(int i=0; i<numPaths; i++){
+					Serial.println(i);
+					paths[i]->writeOut();
+				}
 
                 //delay(3000); THIS IS CAUSING PROBLEMS, COMMENTING IT OUT FOR NOW. TODO : fix
 
+<<<<<<< HEAD
 			    state = STATE_REPLAY;
                 Serial.println("BEGINNING REPLAY!");
+=======
+				currentPathId = 0;
+				currentPath = paths[0];
+
+				robotPose.reset();
+>>>>>>> d7d36fa0ecb9550ea6de65403c869226f2a47a43
 			}
 			
 		}else if(state == STATE_REPLAY){
-			if (lastState != STATE_REPLAY){
-				Serial.println("Odometry reset");
-				robotPose.reset();
-			}
 
-		    lineReplay(&path1, leftAvg, rightAvg);
+			replayLine(leftAvg, rightAvg, dt);
 			
-			if(loopCount % 100 == 0){
+			if(loopCount % 50 == 0){
 				writePoseSerial();
 			}
+<<<<<<< HEAD
 			
 			lastState = state;
 
@@ -164,17 +193,14 @@ void loop()
 
 			    state = STATE_STOP;
 			}
+=======
+>>>>>>> d7d36fa0ecb9550ea6de65403c869226f2a47a43
 
 		}else{
-			leftPower = 0;
-			rightPower = 0;
-			
-			lastState = state;
+			stop();
 		}
 
 		driveMotors();
-
-		robotPose.odometryUpdate(leftPower, rightPower, dt);
 
 
 		// This code intentionally refuses to run every 10th loop to prevent feeding badly
@@ -192,6 +218,9 @@ void loop()
 		// without causing hyperactive behavior if something blocks for a while.
 		lastActionTime = lastActionTime + LOOP_DURATION*int(dt / LOOP_DURATION);
 
+		// If something messed up such that this loop took ridiculously long, prevent
+		// massive values of dt next time through the loop.
+		// This happens during state transitions sometimes.
 		if (millis() - lastActionTime > 500) {
 			lastActionTime = millis();
 		}
@@ -199,9 +228,12 @@ void loop()
 }
 
 // Implements non-blocking bang-bang control of motors.
-void lineFollowPid(float leftAvg, float rightAvg)
+void memorizeLine(float leftAvg, float rightAvg)
 {
-	float error = lineOffset(leftAvg, rightAvg);
+	bool useLeftSensor = currentPath->useLeftSensor;
+	
+	// Step 1: compute the error from a straight PID line follower
+	float error = lineOffset(leftAvg, rightAvg, useLeftSensor);
 	PIDerror = error;
 
 	pid.Compute();
@@ -209,46 +241,106 @@ void lineFollowPid(float leftAvg, float rightAvg)
 	// whether the robot will turn right or left (positive is right)
 	float turnFactor = PIDoutput;
 
-	leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
-	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
+	if (!useLeftSensor){
+		turnFactor *= -1;
+	}
 
-	normalizePowers(&leftPower, &rightPower, 255);
+	// Step 2: constrain that error to make sure the robot doesn't turn (much) toward the line
+	if(useLeftSensor){
+	    turnFactor = min(turnFactor, OUTER_TURN_LIMIT);
+	} else {
+	    turnFactor = max(turnFactor, -OUTER_TURN_LIMIT);
+	}
+
+	leftPower	= FORWARD_POWER_INITIAL + turnFactor * TURN_POWER_INITIAL;
+	rightPower	= FORWARD_POWER_INITIAL - turnFactor * TURN_POWER_INITIAL;
+
+
+	// Step 3: Record the current motion into the path.
+	currentPath->attemptUpdate( &robotPose );
+
+
+	// Step 4: determine whether the robot has ended the current segment
+
+	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
+
+	if (offReading > 0.5 || robotPose.distAlong > currentPath->allocatedPoints){
+		// The robot's off-line sensor has seen a line
+		Serial.println("segment end detected");
+
+		stop();
+		delay(1000);
+		robotPose.reset();
+
+		if(currentPathId < numPaths - 1){
+		    currentPathId++;
+		    currentPath = paths[currentPathId];
+		}else{
+			state = STATE_REPLAY;
+		}
+
+	}
+
+
+	// Print debug information
+	if(loopCount % 50 == 0){
+		writePoseSerial();
+	}
 }
 
-void lineReplay(Path *path, float leftAvg, float rightAvg) {
-	PathPoint *target = path->getPoint(robotPose.distAlong);
+void replayLine(float leftAvg, float rightAvg, int dt) {
+	bool useLeftSensor = currentPath->useLeftSensor;
+
+	// Step 1: adjust current odometry estimate on the basis of sensor readings.
+
+	double lineError = lineOffset(leftAvg, rightAvg, useLeftSensor);
+
+	robotPose.angleFrom += LINE_ANGLE_ADJUSTMENT_RATE * dt * lineError;
+
+	// Step 2: Drive the robot to follow the recorded path
+
+	PathPoint *target = currentPath->getPoint(robotPose.distAlong);
 
 	// error is positive if the path is left of the robot
 	double pathError = byte(target->wrappedAngle - byte(robotPose.angleFrom));
 	if(pathError > 127){
 	    pathError = pathError - 256;
 	}
-	pathError /= 255;
-
-
-	double lineError = lineOffset(leftAvg, rightAvg);
-	PIDerror = lineError;
-
-	pid.Compute();
-
 
 	// whether the robot will turn right or left (positive is right)
-	double turnFactor = -pathError * 30 + PIDoutput * 0.3;
+	double turnFactor = -pathError * PATH_STEERING_RATE;
 
-	leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
-	rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
+	leftPower	= POWER_REPLAY * (1 + turnFactor);
+	rightPower	= POWER_REPLAY * (1 - turnFactor);
 
-	leftPower 	*= FOLLOW_MULTIPLIER;
-	rightPower 	*= FOLLOW_MULTIPLIER;
+	// Step 3: Determine whether this segment of path is finished
 
+	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
+
+	if (offReading > 0.5 && robotPose.distAlong > currentPath->usedPoints*0.7){
+		// The robot's off-line sensor has seen a line
+		Serial.println("segment end detected");
+
+		stop();
+		delay(1000);
+		robotPose.reset();
+
+		if(currentPathId < numPaths - 1){
+		    currentPathId++;
+		    currentPath = paths[currentPathId];
+		}else{
+			state = STATE_STOP;
+		}
+
+	}
+
+	// Print debug information
 	if(loopCount % 50 == 0){
 	    Serial.print("pathError = ");
 	    Serial.print(pathError);
 	    Serial.print("\t:\t");
 	    Serial.println(turnFactor);
 	}
-
-	normalizePowers(&leftPower, &rightPower, 255);
 }
 
 // normalizePowers ensures that 
@@ -268,18 +360,20 @@ void normalizePowers(int *left, int *right, int limit){
 	}
 }
 
-// Returns the estimated offset of the robot from the line, with 
-// positive values indicating that the robot is right of the line
-// and negative values indicating the robot is left of the line.
-// Inputs are raw readings from left and right sensors, 0...1023
-//
-// Currently the returned value is dimensionless, and
-// represents only the data derivable from the immediate sensor
-// readings.
-float lineOffset(float leftAvg, float rightAvg)
+// Returns how much the selected sensor is on the line, with
+// -1 reflecting "completely off" and 1 meaning "completely  on"
+float lineOffset(float leftAvg, float rightAvg, bool useLeftSensor)
 {
+<<<<<<< HEAD
     return map(rightAvg, MIN_SENSOR, MAX_SENSOR, -100, 100) / 100.0;
     //return rightAvg - leftAvg;
+=======
+	if(useLeftSensor){
+		return map(leftAvg, MIN_SENSOR_LEFT, MAX_SENSOR_LEFT, -100, 100) / 100.0;
+	} else {
+		return map(rightAvg, MIN_SENSOR_RIGHT, MAX_SENSOR_RIGHT, -100, 100) / 100.0;
+	}
+>>>>>>> d7d36fa0ecb9550ea6de65403c869226f2a47a43
 }
 
 /*
@@ -325,9 +419,17 @@ void writeTuningsSerial()
 	Serial.print(")\n");
 }
 
+void stop(){
+	leftPower = 0;
+	rightPower = 0;
+	driveMotors();
+}
+
 void driveMotors(){
 	// Inputs leftPower and rightPower vary from -255...255
 	// Code in this function is based on https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/using-dc-motors
+
+	normalizePowers(&leftPower, &rightPower, 255);
 
 	// For each motor, decide whether to run it FORWARD, BACKWARD, (or RELEASE)
 	// These are ternary operators, returning FORWARD if power > 0 and backward otherwise.

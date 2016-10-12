@@ -26,10 +26,10 @@ public:
 class Path
 {
 public:
-	Path();
+	Path(int length, bool useLeft);
 
-	PathPoint points[100];
-	const int allocatedPoints = 100;
+	PathPoint *points;
+	int allocatedPoints = 0;
 	int usedPoints = 0;
 
 	bool useLeftSensor = false;
