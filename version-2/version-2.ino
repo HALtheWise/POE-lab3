@@ -25,18 +25,18 @@ const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop freque
 const int FORWARD_POWER_INITIAL = 30; // 0...255
 const int TURN_POWER_INITIAL = 30; // 0...255
 
-const float OUTER_TURN_LIMIT = 0.1;
+const float OUTER_TURN_LIMIT = 0.2;
 
 const int POWER_REPLAY = 45; // 0...255
 
 const double PATH_STEERING_RATE = .20; // Measured in fraction / degree, path-based replay steering constant.
 
-const double LINE_ANGLE_ADJUSTMENT_RATE = 20.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
+const double LINE_ANGLE_ADJUSTMENT_RATE = 40.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
 
 const int MIN_SENSOR_LEFT 	= 281;
 const int MAX_SENSOR_LEFT 	= 804;
-const int MIN_SENSOR_RIGHT	= 533;
-const int MAX_SENSOR_RIGHT 	= 860;
+const int MIN_SENSOR_RIGHT	= 630;
+const int MAX_SENSOR_RIGHT 	= 880;
 
 const double FOLLOW_MULTIPLIER = 1.5;
 
@@ -151,14 +151,8 @@ void loop()
 
 			replayLine(leftAvg, rightAvg, dt);
 			
-			if(loopCount % 100 == 0){
+			if(loopCount % 50 == 0){
 				writePoseSerial();
-			}
-
-			if(robotPose.distAlong > 100){
-				Serial.println("finished replay, stopping.");
-
-			    state = STATE_STOP;
 			}
 
 		}else{
@@ -244,7 +238,7 @@ void memorizeLine(float leftAvg, float rightAvg)
 
 
 	// Print debug information
-	if(loopCount % 100 == 0){
+	if(loopCount % 50 == 0){
 		writePoseSerial();
 	}
 }
@@ -278,7 +272,7 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 
 	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
-	if ((offReading > 0.5 && robotPose.distAlong > currentPath->usedPoints - 30) || robotPose.distAlong > MAX_PATH_LENGTH){
+	if ((offReading > 0.5 && robotPose.distAlong > currentPath->usedPoints*0.7) || robotPose.distAlong > MAX_PATH_LENGTH){
 		// The robot's off-line sensor has seen a line
 		Serial.println("segment end detected");
 
