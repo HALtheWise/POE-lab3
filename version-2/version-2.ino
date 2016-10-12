@@ -25,6 +25,8 @@ const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop freque
 const int FORWARD_POWER_INITIAL = 30; // 0...255
 const int TURN_POWER_INITIAL = 30; // 0...255
 
+const float OUTER_TURN_LIMIT = 0.2;
+
 const int POWER_REPLAY = 45; // 0...255
 
 const double PATH_STEERING_RATE = .20; // Measured in fraction / degree, path-based replay steering constant.
@@ -195,6 +197,7 @@ void memorizeLine(float leftAvg, float rightAvg)
 {
 	bool useLeftSensor = currentPath->useLeftSensor;
 	
+	// Step 1: compute the error from a straight PID line follower
 	float error = lineOffset(leftAvg, rightAvg, useLeftSensor);
 	PIDerror = error;
 
@@ -203,13 +206,23 @@ void memorizeLine(float leftAvg, float rightAvg)
 	// whether the robot will turn right or left (positive is right)
 	float turnFactor = PIDoutput;
 
+	// Step 2: constrain that error to make sure the robot doesn't turn (much) toward the line
+	if(useLeftSensor){
+	    turnFactor = min(turnFactor, OUTER_TURN_LIMIT);
+	} else {
+	    turnFactor = max(turnFactor, -OUTER_TURN_LIMIT);
+	}
+
 	leftPower	= FORWARD_POWER_INITIAL + turnFactor * TURN_POWER_INITIAL;
 	rightPower	= FORWARD_POWER_INITIAL - turnFactor * TURN_POWER_INITIAL;
 
-	normalizePowers(&leftPower, &rightPower, 255);
-	
 
-	// Reading from sensor off of the line
+	// Step 3: Record the current motion into the path.
+	currentPath->attemptUpdate( &robotPose );
+
+
+	// Step 4: determine whether the robot has ended the current segment
+
 	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
 	if (offReading > 0 || robotPose.distAlong > MAX_PATH_LENGTH){
@@ -227,9 +240,6 @@ void memorizeLine(float leftAvg, float rightAvg)
 			state = STATE_REPLAY;
 		}
 
-	}else{
-		// The robot is still following normally
-		currentPath->attemptUpdate( &robotPose );
 	}
 
 
