@@ -25,7 +25,7 @@ const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop freque
 const int FORWARD_POWER_INITIAL = 30; // 0...255
 const int TURN_POWER_INITIAL = 30; // 0...255
 
-const float OUTER_TURN_LIMIT = 0.2;
+const float OUTER_TURN_LIMIT = 0.1;
 
 const int POWER_REPLAY = 45; // 0...255
 
@@ -267,7 +267,6 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 	if(pathError > 127){
 	    pathError = pathError - 256;
 	}
-	pathError /= 255;
 
 	// whether the robot will turn right or left (positive is right)
 	double turnFactor = -pathError * PATH_STEERING_RATE;
@@ -279,7 +278,7 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 
 	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
-	if (offReading > 0.5 || robotPose.distAlong > MAX_PATH_LENGTH){
+	if ((offReading > 0.5 && robotPose.distAlong > currentPath->usedPoints - 30) || robotPose.distAlong > MAX_PATH_LENGTH){
 		// The robot's off-line sensor has seen a line
 		Serial.println("segment end detected");
 
