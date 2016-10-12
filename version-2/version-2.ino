@@ -25,8 +25,10 @@ const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop freque
 const int FORWARD_POWER = 25; // 0...255
 const int TURN_POWER = 25; // 0...255
 
-const int MIN_SENSOR = 300;
-const int MAX_SENSOR = 800;
+const int MIN_SENSOR_LEFT 	= 281;
+const int MAX_SENSOR_LEFT 	= 804;
+const int MIN_SENSOR_RIGHT	= 533;
+const int MAX_SENSOR_RIGHT 	= 860;
 
 const double FOLLOW_MULTIPLIER = 1.5;
 
@@ -279,12 +281,14 @@ void normalizePowers(int *left, int *right, int limit){
 }
 
 // Returns how much the selected sensor is on the line, with
-// -1 reflecting "completely on" and 1 meaning "completely  off"
+// -1 reflecting "completely off" and 1 meaning "completely  on"
 float lineOffset(float leftAvg, float rightAvg, bool useLeftSensor)
 {
-	float sensorVal = useLeftSensor ? leftAvg : rightAvg;
-	return map(sensorVal, MIN_SENSOR, MAX_SENSOR, -100, 100) / 100.0;
-	//return rightAvg - leftAvg;
+	if(useLeftSensor){
+		return map(leftAvg, MIN_SENSOR_LEFT, MAX_SENSOR_LEFT, -100, 100) / 100.0;
+	} else {
+		return map(rightAvg, MIN_SENSOR_RIGHT, MAX_SENSOR_RIGHT, -100, 100) / 100.0;
+	}
 }
 
 void handleIncomingSerial()
