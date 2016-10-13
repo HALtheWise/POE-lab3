@@ -45,9 +45,9 @@ void replayLine(float leftAvg, float rightAvg, int dt);
 const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop frequency
 
 const int FORWARD_POWER_INITIAL = 30; // 0...255
-const int TURN_POWER_INITIAL = 30; // 0...255
+const int TURN_POWER_INITIAL = 60; // 0...255
 
-const float OUTER_TURN_LIMIT = 0.2;
+const float OUTER_TURN_LIMIT = 0.6;
 
 const int POWER_REPLAY = 40; // 0...255
 
@@ -55,10 +55,10 @@ const double PATH_STEERING_RATE = .20; // Measured in fraction / degree, path-ba
 
 const double LINE_ANGLE_ADJUSTMENT_RATE = 50.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
 
-const int MIN_SENSOR_LEFT 	= 281;
-const int MAX_SENSOR_LEFT 	= 804;
-const int MIN_SENSOR_RIGHT	= 630;
-const int MAX_SENSOR_RIGHT 	= 880;
+const int MIN_SENSOR_LEFT 	= 300;
+const int MAX_SENSOR_LEFT 	= 800;
+const int MIN_SENSOR_RIGHT	= 300;
+const int MAX_SENSOR_RIGHT 	= 800;
 
 // Pin setup (must match hardware)
 
@@ -84,8 +84,8 @@ int leftPower = 0, rightPower = 0; // range -255...255
 
 Pose robotPose;
 
-Path path1(200, false);
-Path path2(100, true);
+Path path1(600, false);
+Path path2(600, true);
 
 Path *paths[] = {&path1, &path2};
 const byte numPaths = 2;
@@ -96,7 +96,7 @@ Path *currentPath = paths[currentPathId];
 
 // Setup PID controller
 double PIDerror=0, PIDsetpoint=0, PIDoutput;
-double kp=1,ki=0,kd=0;
+double kp=1,ki=0.0,kd=0.0;
 
 PID pid(&PIDerror, &PIDoutput, &PIDsetpoint, kp, ki, kd, DIRECT);
 
@@ -173,7 +173,7 @@ void loop()
             replayLine(leftAvg, rightAvg, dt);
 
             if(loopCount % 50 == 0){
-                writePoseSerial();
+                //writePoseSerial();
             }
 
         }else{
@@ -232,6 +232,12 @@ void memorizeLine(float leftAvg, float rightAvg)
         turnFactor = max(turnFactor, -OUTER_TURN_LIMIT);
     }
 
+    Serial.print(leftAvg);
+    Serial.print(',');
+    Serial.print(rightAvg);
+    Serial.print(',');
+    Serial.println(turnFactor);
+
     leftPower	= FORWARD_POWER_INITIAL + turnFactor * TURN_POWER_INITIAL;
     rightPower	= FORWARD_POWER_INITIAL - turnFactor * TURN_POWER_INITIAL;
 
@@ -266,7 +272,7 @@ void memorizeLine(float leftAvg, float rightAvg)
 
     // Print debug information
     if(loopCount % 50 == 0){
-        writePoseSerial();
+        //writePoseSerial();
     }
 }
 
@@ -346,6 +352,9 @@ void normalizePowers(int *left, int *right, int limit){
 // -1 reflecting "completely off" and 1 meaning "completely  on"
 float lineOffset(float leftAvg, float rightAvg, bool useLeftSensor)
 {
+    //Serial.println(leftAvg);;
+    //Serial.println(rightAvg);
+
     if(useLeftSensor){
         return map(leftAvg, MIN_SENSOR_LEFT, MAX_SENSOR_LEFT, -100, 100) / 100.0;
     } else {

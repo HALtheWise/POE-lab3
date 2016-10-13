@@ -24,9 +24,9 @@ int analogRead(int pin){
         return -1;
     }else{
         if(pin == leftSensorPin){
-            return map(robot->ir_val_l,0.0,1.0,300,800);
+            return map(robot->ir_val_l,0.0,1.0,800,300);
         }else{
-            return map(robot->ir_val_r,0.0,1.0,300,800);
+            return map(robot->ir_val_r,0.0,1.0,800,300);
             //return robot->ir_val_r;
         }
 
