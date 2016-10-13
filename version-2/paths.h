@@ -45,10 +45,10 @@ public:
 	Path(int length, bool useLeft);
 
 	PathPoint *points;
-	int allocatedPoints = 0;
-	int usedPoints = 0;
+	int allocatedPoints; // = 0;
+	int usedPoints; // = 0;
 
-	bool useLeftSensor = false;
+	bool useLeftSensor; // = false;
 
 	void writeOut( void );
 	bool attemptUpdate( Pose *pose );
@@ -60,7 +60,7 @@ Path::Path(int length, bool useLeft){
 
 	allocatedPoints = length;
 
-	points = malloc(sizeof(PathPoint) * length);
+	points = (PathPoint*) malloc(sizeof(PathPoint) * length);
 
 	for (int i = 0; i < allocatedPoints; ++i)
 	{
