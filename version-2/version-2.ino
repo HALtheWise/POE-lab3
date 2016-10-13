@@ -31,7 +31,7 @@ const int POWER_REPLAY = 40; // 0...255
 
 const double PATH_STEERING_RATE = .20; // Measured in fraction / degree, path-based replay steering constant.
 
-const double LINE_ANGLE_ADJUSTMENT_RATE = 50.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
+const double LINE_ANGLE_ADJUSTMENT_RATE = 25.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
 
 const int MIN_SENSOR_LEFT 	= 281;
 const int MAX_SENSOR_LEFT 	= 804;
