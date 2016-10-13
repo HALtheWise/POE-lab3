@@ -14,6 +14,13 @@
 
 #include <PID_v1.h>
 
+byte state = 1;
+const byte STATE_STOP = 0;
+const byte STATE_MEMORIZE = 1;
+const byte STATE_REPLAY = 2;
+
+const double MEMORIZATION_TURN_FUDGE = 3;
+
 // Include path management code
 #include "odometry.h"
 #include "paths.h"
@@ -25,15 +32,15 @@ const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop freque
 const int FORWARD_POWER_INITIAL = 30; // 0...255
 const int TURN_POWER_INITIAL = 30; // 0...255
 
-const float OUTER_TURN_LIMIT = 0.2;
+const float OUTER_TURN_LIMIT = 0.1;
 
 const int POWER_REPLAY = 40; // 0...255
 
 const double PATH_STEERING_RATE = .20; // Measured in fraction / degree, path-based replay steering constant.
 
-const byte SMOOTHING_LENGTH = 5;
+const byte SMOOTHING_LENGTH = 7;
 
-const double LINE_ANGLE_ADJUSTMENT_RATE = 25.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
+const double LINE_ANGLE_ADJUSTMENT_RATE = 0.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
 
 const int MIN_SENSOR_LEFT 	= 281;
 const int MAX_SENSOR_LEFT 	= 804;
@@ -51,11 +58,6 @@ Adafruit_DCMotor *rightMotor = AFMS.getMotor(2);
 // Global variable setup (things that change each loop)
 long lastActionTime;
 
-byte state = 1;
-const byte STATE_STOP = 0;
-const byte STATE_MEMORIZE = 1;
-const byte STATE_REPLAY = 2;
-
 
 int leftPower = 0, rightPower = 0; // range -255...255
 
@@ -71,7 +73,7 @@ Path path5(200, false);
 Path path6(200, true);
 
 Path *paths[] = {&path1, &path2, &path2, &path3, &path4, &path5, &path6};
-const byte numPaths = 6;
+const byte numPaths = 2;
 byte currentPathId = 0;
 
 Path *currentPath = paths[currentPathId];
