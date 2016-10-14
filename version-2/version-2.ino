@@ -12,14 +12,14 @@
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
+// Import of PID library for training run, see libraries.md for download instructions
 #include <PID_v1.h>
 
+// Setup state machine for robot 
 byte state = 1;
 const byte STATE_STOP = 0;
 const byte STATE_MEMORIZE = 1;
 const byte STATE_REPLAY = 2;
-
-const double MEMORIZATION_TURN_FUDGE = 1.0;
 
 // Include path management code
 #include "odometry.h"
@@ -88,34 +88,42 @@ PID pid(&PIDerror, &PIDoutput, &PIDsetpoint, kp, ki, kd, DIRECT);
 
 void setup()
 {
+	AFMS.begin();
+
+	// Wait one second before running to allow the user to get their hand
+	// out of the robot.
 	stop();
 	delay(1000);
 
+	// Note the high baud rate to allow Serial.print() statements to run non-blocking within 10ms
 	Serial.begin(57600);
 
 	lastActionTime = millis();
 
-	// Initialize pins
-	// Note that the analog sensors don't need initialization
-	AFMS.begin();
-
+	// Initialize PID controller parameters
 	pid.SetMode(AUTOMATIC);
 	pid.SetSampleTime(LOOP_DURATION - 2);
 	pid.SetOutputLimits(-1, 1);
 
+	// Reset robot pose for beginning of training run
 	robotPose.reset();
 }
 
+// Tracking variables for IR averaging to allow maximally smooth data collection
+// As many readings as possible over <10ms are averaged before any other processing is done
 long totalLeft = 0;
 long totalRight = 0;
 int count = 0;
 
+// Used to moderate debugging printouts with modulo.
 int loopCount = 0;
 
 void loop()
 {
+	// Check for newly-set PID parameters on serial
 	handleIncomingSerial();
 
+	// Update tracking variables of IR sensor
 	int leftRead = 0;
 	int rightRead = 0;
 	getMeasurements(&leftRead, &rightRead);
@@ -131,14 +139,19 @@ void loop()
 		float leftAvg = float(totalLeft) / count;
 		float rightAvg = float(totalRight) / count;
 
+		// Update the estimated position of the robot based on currently commanded powers
+		// In the future, this could be stateful and involve other sensors.
 		robotPose.odometryUpdate(leftPower, rightPower, dt);
 
+
+		// Main state machine
 		if(state == STATE_MEMORIZE){
 			//Serial.println(lineOffset(leftAvg, rightAvg));
 			memorizeLine(leftAvg, rightAvg);
 			
 			if(state == STATE_REPLAY){
 				// The memorizeLine function decided to change to STATE_REPLAY
+				// Transition from STATE_MEMORIZE to STATE_REPLAY
 
 				Serial.println("finished course, replaying.");
 
@@ -151,11 +164,16 @@ void loop()
 					paths[i]->writeOut();
 				}
 
+				// This is blocking code, but the Serial printing above is inherently blocking,
+				// so there is nothing we can do to prevent it. This adds an aesthetically nice pause,
+				// and makes any bugs caused by blocking behavior more obvious so they can be fixed.
 				delay(3000);
 
+				// Reset to the first path
 				currentPathId = 0;
 				currentPath = paths[0];
 
+				// Reset the estimated robot position
 				robotPose.reset();
 			}
 			
@@ -171,39 +189,47 @@ void loop()
 			stop();
 		}
 
+		// Functions above write requested powers to global variables, 
+		// driveMotors() reads, processes, and outputs those.
 		driveMotors();
 
 
-		// This code intentionally refuses to run every 10th loop to prevent feeding badly
+		// Check to see wheter the loop is running as fast as desired, and throw warnings if it isn't.
+		// This code intentionally refuses to run every 10th loop to prevent feeding badly where
+		// printing the warning causes excessive loop time in a self-perpetuating loop.
 		if(dt > LOOP_DURATION * 2 && loopCount % 10){
 		    Serial.print("WARNING: Main loop running too slow: ");
 		    Serial.println(dt);
 		}
 
-		// Reset counting variables
+		// Reset sensor tracking variables
 		totalRight = totalLeft = 0;
 		count = 0;
 		loopCount++;
 
 		// This formulation attempts to ensure average loop duration is LOOP_DURATION,
-		// without causing hyperactive behavior if something blocks for a while.
+		// without causing hyperactive behavior if the code is running slower than expected.
+
+		// In particular, this won't drift at all unless a loop takes more than 10ms, 
+		// and won't ever run multiple loops in a row with less than 10ms spacing.
 		lastActionTime = lastActionTime + LOOP_DURATION*int(dt / LOOP_DURATION);
 
 		// If something messed up such that this loop took ridiculously long, prevent
 		// massive values of dt next time through the loop.
-		// This happens during state transitions sometimes.
+		// This happens during state transitions sometimes, especially if lots of serial data is being printed
 		if (millis() - lastActionTime > 500) {
 			lastActionTime = millis();
 		}
 	}
 }
 
-// Implements non-blocking bang-bang control of motors.
+// Using a basic clipped PID controller, memorizes the shape of the course.
 void memorizeLine(float leftAvg, float rightAvg)
 {
+	// Whether the current path curves right or left (preconfigured)
 	bool useLeftSensor = currentPath->useLeftSensor;
 	
-	// Step 1: compute the error from a straight PID line follower
+	// Step 1: compute the error from a simple PID line follower
 	float error = lineOffset(leftAvg, rightAvg, useLeftSensor);
 	PIDerror = error;
 
@@ -235,23 +261,26 @@ void memorizeLine(float leftAvg, float rightAvg)
 
 	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
+	// Note guards to prevent segments from finishing immediately (less then 5cm)
+	// or outlasting their allocated memory.
 	if ((offReading > 0.5 && robotPose.distAlong > 5) || robotPose.distAlong > currentPath->allocatedPoints){
 		// The robot's off-line sensor has seen a line
 		Serial.println("segment end detected");
 
+
 		stop();
-		delay(500);
+		// delay(500);
 		robotPose.reset();
 
 		if(currentPathId < numPaths - 1){
 		    currentPathId++;
 		    currentPath = paths[currentPathId];
 		}else{
+			// trigger state transition
 			state = STATE_REPLAY;
 		}
 
 	}
-
 
 	// Print debug information
 	if(loopCount % 50 == 0){
@@ -259,7 +288,10 @@ void memorizeLine(float leftAvg, float rightAvg)
 	}
 }
 
+// Sets motor values for replaying a recorded path with input from sensor readings leftAvg and rightAvg
 void replayLine(float leftAvg, float rightAvg, int dt) {
+
+	// Step 0: Handle exception for control parameters on the 5th segment (id=4)
 	double awayAdjustAmount = LINE_ANGLE_ADJUSTMENT_RATE_AWAY;
 	if(currentPathId == 4){
 	    awayAdjustAmount *= 1.8;
@@ -268,6 +300,9 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 	bool useLeftSensor = currentPath->useLeftSensor;
 
 	// Step 1: adjust current odometry estimate on the basis of sensor readings.
+	// Note that this is clipped such that it will adjust dramatically to avoid
+	// a line and gradually to find it again.
+	// This prevents errors caused by the asymmetry of one-sensor following.
 
 	double lineError = lineOffset(leftAvg, rightAvg, useLeftSensor);
 
@@ -275,11 +310,6 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 							 * dt * lineError;
 
 	lineCorrection = constrain(lineCorrection, -LINE_ANGLE_ADJUSTMENT_RATE_TOWARD, awayAdjustAmount);
-
-	// Serial.print(lineError);
-	// Serial.print("\t");
-	// Serial.println(lineCorrection);
-
 
 	robotPose.angleFrom += lineCorrection;
 
@@ -306,7 +336,7 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 		Serial.println("segment end detected");
 
 		stop();
-		delay(200); // TODO: remove this for final follows
+		// delay(200);
 		robotPose.reset();
 
 		if(currentPathId < numPaths - 1){
@@ -328,7 +358,7 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 }
 
 // normalizePowers ensures that 
-// abs(left) < limit and abs(right) < limit
+// abs(*left) < limit and abs(*right) < limit
 // while maintaining their ratio.
 // Useful for constraining desired speeds to be
 // achievable by the motors.
@@ -343,6 +373,7 @@ void normalizePowers(int *left, int *right, int limit){
 
 // Returns how much the selected sensor is on the line, with
 // -1 reflecting "completely off" and 1 meaning "completely  on"
+// Note that the output is not strictly gaurunteed to be in this range.
 float lineOffset(float leftAvg, float rightAvg, bool useLeftSensor)
 {
 	if(useLeftSensor){
@@ -352,6 +383,7 @@ float lineOffset(float leftAvg, float rightAvg, bool useLeftSensor)
 	}
 }
 
+// If there is any data in the serial buffer, attempts to read in that data as new P, I, and D values.
 void handleIncomingSerial()
 {
 	if(Serial.available() > 0){
@@ -360,8 +392,10 @@ void handleIncomingSerial()
 		// Read first number from serial stream
 		kp = Serial.parseFloat();
 		Serial.read();
+		// Read second number from serial stream
 		ki = Serial.parseFloat();
 		Serial.read();
+		// Read third number form serial stream
 		kd = Serial.parseFloat();
 		Serial.read();
 

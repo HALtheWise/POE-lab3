@@ -1,3 +1,7 @@
+// PathPoint represents the data associated with each point
+// along a recorded segment of path.
+// Currently this is just an angle because the speed adjustment flags
+// needed to be removed before they could be fully implemented.
 class PathPoint
 {
 public:
@@ -10,6 +14,7 @@ PathPoint::PathPoint( void ){
 	wrappedAngle = 0;
 }
 
+// A Path is a collection of PathPoints that represents a segment of the course.
 class Path
 {
 public:
@@ -27,6 +32,7 @@ public:
 	PathPoint *getPoint( double distAlong );
 };
 
+// Note that the points array is dynamically allocated to save space.
 Path::Path(int length, bool useLeft){
 	useLeftSensor = useLeft;
 
@@ -51,6 +57,7 @@ PathPoint *Path::getPoint( double distAlong ){
 	return &points[index];
 }
 
+// Updates the path with new information if the information is not currently contained in the path.
 bool Path::attemptUpdate( Pose *pose ) {
 	if (int(pose->distAlong) > usedPoints && usedPoints < allocatedPoints){
 		usedPoints++;
@@ -61,6 +68,7 @@ bool Path::attemptUpdate( Pose *pose ) {
 	}
 }
 
+// Prints Path data to serial for debugging and analysis.
 void Path::writeOut(){
 	Serial.println("id\tspeed\tisOffLine\tangle");
 	for (int i = 0; i < usedPoints; ++i)
@@ -72,6 +80,8 @@ void Path::writeOut(){
 	}
 }
 
+// Runs a n-point leading average to enable both forward-looking controls predictions
+// and to smooth out irregular behavior in the training follow.
 void Path::smooth(byte smoothingLength){
 	for (int i = 0; i < usedPoints - smoothingLength; ++i)
 	{
