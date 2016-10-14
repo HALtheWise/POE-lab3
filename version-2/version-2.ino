@@ -270,9 +270,9 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 
 	lineCorrection = constrain(lineCorrection, -LINE_ANGLE_ADJUSTMENT_RATE_TOWARD, LINE_ANGLE_ADJUSTMENT_RATE_AWAY);
 
-	Serial.print(lineError);
-	Serial.print("\t");
-	Serial.println(lineCorrection);
+	// Serial.print(lineError);
+	// Serial.print("\t");
+	// Serial.println(lineCorrection);
 
 
 	robotPose.angleFrom += lineCorrection;
