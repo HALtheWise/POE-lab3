@@ -283,10 +283,7 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 	PathPoint *target = currentPath->getPoint(robotPose.distAlong);
 
 	// error is positive if the path is left of the robot
-	double pathError = byte(target->wrappedAngle - byte(robotPose.angleFrom));
-	if(pathError > 127){
-	    pathError = pathError - 256;
-	}
+	double pathError = target->wrappedAngle - robotPose.angleFrom;
 
 	// whether the robot will turn right or left (positive is right)
 	double turnFactor = -pathError * PATH_STEERING_RATE;

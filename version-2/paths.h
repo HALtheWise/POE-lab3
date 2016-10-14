@@ -1,13 +1,13 @@
 class PathPoint
 {
 public:
-	byte wrappedAngle;
+	double wrappedAngle;
 
 	PathPoint();
 };
 
 PathPoint::PathPoint( void ){
-	wrappedAngle = 128;
+	wrappedAngle = 0;
 }
 
 class Path
@@ -39,7 +39,7 @@ Path::Path(int length, bool useLeft){
 		points[i] = PathPoint();
 	}
 
-	points[0].wrappedAngle = 128;
+	points[0].wrappedAngle = 0;
 }
 
 PathPoint *Path::getPoint( double distAlong ){
@@ -75,24 +75,15 @@ void Path::writeOut(){
 void Path::smooth(byte smoothingLength){
 	for (int i = 0; i < usedPoints - smoothingLength; ++i)
 	{
-		int total = 0;
-		int average;
+		double total = 0;
 		for (int j = 0; j < smoothingLength; ++j)
 		{
-			int point = points[i+j].wrappedAngle;
-			average = total / (j+1);
+			double point = points[i+j].wrappedAngle;
 
-			if (point < average - 180)
-			{
-				point += 256;
-			}
-			if (point > average + 180)
-			{
-				point -= 256;
-			}
 			total += point;
 		}
+		double average = total / smoothingLength;
 
-		points[i].wrappedAngle = byte(average);
+		points[i].wrappedAngle = average;
 	}
 }

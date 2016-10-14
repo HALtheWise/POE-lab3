@@ -27,7 +27,7 @@ void Pose::writeOut( void ) {
 
 void Pose::reset(){
 	distAlong = 0;
-	angleFrom = 128;
+	angleFrom = 0;
 }
 
 const double MAX_FORWARD_SPEED = 100;
