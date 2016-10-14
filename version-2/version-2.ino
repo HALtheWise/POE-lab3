@@ -32,19 +32,20 @@ const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop freque
 const int FORWARD_POWER_INITIAL = 30; // 0...255
 const int TURN_POWER_INITIAL = 30; // 0...255
 
-const float OUTER_TURN_LIMIT = 0.1;
+const float OUTER_TURN_LIMIT = 0.2;
 
 const int POWER_REPLAY = 40; // 0...255
 
 const double PATH_STEERING_RATE = .20; // Measured in fraction / degree, path-based replay steering constant.
 
-const byte SMOOTHING_LENGTH = 7;
+const byte SMOOTHING_LENGTH = 4;
 
-const double LINE_ANGLE_ADJUSTMENT_RATE = 0.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor.
+const double LINE_ANGLE_ADJUSTMENT_RATE_AWAY = 300.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor right.
+const double LINE_ANGLE_ADJUSTMENT_RATE_TOWARD = 150.0/1000; // Measured in degrees per ms, maximum line-based odometry adjustment factor right.
 
-const int MIN_SENSOR_LEFT 	= 281;
-const int MAX_SENSOR_LEFT 	= 804;
-const int MIN_SENSOR_RIGHT	= 630;
+const int MIN_SENSOR_LEFT 	= 360;
+const int MAX_SENSOR_LEFT 	= 780;
+const int MIN_SENSOR_RIGHT	= 600;
 const int MAX_SENSOR_RIGHT 	= 880;
 
 // Pin setup (must match hardware)
@@ -86,7 +87,10 @@ PID pid(&PIDerror, &PIDoutput, &PIDsetpoint, kp, ki, kd, DIRECT);
 
 void setup()
 {
-	Serial.begin(9600);
+	stop();
+	delay(1000);
+
+	Serial.begin(57600);
 
 	lastActionTime = millis();
 
@@ -99,9 +103,6 @@ void setup()
 	pid.SetOutputLimits(-1, 1);
 
 	robotPose.reset();
-
-	stop();
-	delay(1000);
 }
 
 long totalLeft = 0;
@@ -264,7 +265,18 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 
 	double lineError = lineOffset(leftAvg, rightAvg, useLeftSensor);
 
-	robotPose.angleFrom += LINE_ANGLE_ADJUSTMENT_RATE * dt * lineError;
+	double lineCorrection = max(LINE_ANGLE_ADJUSTMENT_RATE_AWAY, LINE_ANGLE_ADJUSTMENT_RATE_TOWARD)
+							 * dt * lineError;
+
+	lineCorrection = constrain(lineCorrection, -LINE_ANGLE_ADJUSTMENT_RATE_TOWARD, LINE_ANGLE_ADJUSTMENT_RATE_AWAY);
+
+	Serial.print(lineError);
+	Serial.print("\t");
+	Serial.println(lineCorrection);
+
+
+	robotPose.angleFrom += lineCorrection;
+
 
 	// Step 2: Drive the robot to follow the recorded path
 

@@ -7,7 +7,7 @@ public:
 };
 
 PathPoint::PathPoint( void ){
-	wrappedAngle = 0;
+	wrappedAngle = 128;
 }
 
 class Path
@@ -38,6 +38,8 @@ Path::Path(int length, bool useLeft){
 	{
 		points[i] = PathPoint();
 	}
+
+	points[0].wrappedAngle = 128;
 }
 
 PathPoint *Path::getPoint( double distAlong ){
