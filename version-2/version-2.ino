@@ -73,7 +73,7 @@ Path path4(150, true);
 Path path5(200, false);
 Path path6(200, true);
 
-Path *paths[] = {&path1, &path2, &path2, &path3, &path4, &path5, &path6};
+Path *paths[] = {&path1, &path2, &path3, &path4, &path5, &path6};
 const byte numPaths = 6;
 byte currentPathId = 0;
 
