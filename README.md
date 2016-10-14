@@ -2,7 +2,7 @@
 
 Code and results for Lab 3 of POE at Olin College, Fall 2016
 
-[report.pdf](Report)
+[Report](report.pdf)
 
 # Current Todos :
 
