@@ -32,7 +32,7 @@ const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop freque
 const int FORWARD_POWER_INITIAL = 30; // 0...255
 const int TURN_POWER_INITIAL = 30; // 0...255
 
-const float OUTER_TURN_LIMIT = 0.1;
+const float OUTER_TURN_LIMIT = 0.05;
 
 const int POWER_REPLAY = 40; // 0...255
 
@@ -260,16 +260,21 @@ void memorizeLine(float leftAvg, float rightAvg)
 }
 
 void replayLine(float leftAvg, float rightAvg, int dt) {
+	double awayAdjustAmount = LINE_ANGLE_ADJUSTMENT_RATE_AWAY;
+	if(currentPathId == 4){
+	    awayAdjustAmount *= 1.8;
+	}
+
 	bool useLeftSensor = currentPath->useLeftSensor;
 
 	// Step 1: adjust current odometry estimate on the basis of sensor readings.
 
 	double lineError = lineOffset(leftAvg, rightAvg, useLeftSensor);
 
-	double lineCorrection = max(LINE_ANGLE_ADJUSTMENT_RATE_AWAY, LINE_ANGLE_ADJUSTMENT_RATE_TOWARD)
+	double lineCorrection = max(awayAdjustAmount, LINE_ANGLE_ADJUSTMENT_RATE_TOWARD)
 							 * dt * lineError;
 
-	lineCorrection = constrain(lineCorrection, -LINE_ANGLE_ADJUSTMENT_RATE_TOWARD, LINE_ANGLE_ADJUSTMENT_RATE_AWAY);
+	lineCorrection = constrain(lineCorrection, -LINE_ANGLE_ADJUSTMENT_RATE_TOWARD, awayAdjustAmount);
 
 	// Serial.print(lineError);
 	// Serial.print("\t");
