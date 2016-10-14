@@ -52,7 +52,7 @@ PathPoint *Path::getPoint( double distAlong ){
 bool Path::attemptUpdate( Pose *pose ) {
 	if (int(pose->distAlong) > usedPoints && usedPoints < allocatedPoints){
 		usedPoints++;
-		points[usedPoints].wrappedAngle = pose->angleFrom;
+		points[usedPoints].wrappedAngle = pose->angleFrom + 180;
 		return true;
 	} else {
 		return false;

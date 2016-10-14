@@ -31,7 +31,7 @@ void Pose::reset(){
 }
 
 const double MAX_FORWARD_SPEED = 100;
-const double MAX_TURN_SPEED = 500;
+const double MAX_TURN_SPEED = 1000;
 
 double adjustPower( int power ){
 	double powerfrac = power / 255.0;
@@ -40,10 +40,12 @@ double adjustPower( int power ){
 
 // Update the estimated pose of the robot based on wheel (estimated) odometry.
 void Pose::odometryUpdate( int leftPower, int rightPower, int timestep) {
+	double turnFudge = (state == STATE_MEMORIZE) ? MEMORIZATION_TURN_FUDGE : 1;
+
 	double leftPowerFrac  = adjustPower(leftPower);
 	double rightPowerFrac = adjustPower(rightPower);
 	double forwardSpeed = (leftPowerFrac + rightPowerFrac) / 2 * MAX_FORWARD_SPEED;
-	double turnSpeed = (rightPowerFrac - leftPowerFrac) / 2 * MAX_TURN_SPEED;
+	double turnSpeed = (rightPowerFrac - leftPowerFrac) / 2 * MAX_TURN_SPEED * turnFudge;
 
 	distAlong += forwardSpeed * timestep / 1000.0;
 	angleFrom += turnSpeed * timestep / 1000.0;

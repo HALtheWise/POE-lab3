@@ -19,7 +19,7 @@ const byte STATE_STOP = 0;
 const byte STATE_MEMORIZE = 1;
 const byte STATE_REPLAY = 2;
 
-const double MEMORIZATION_TURN_FUDGE = 3;
+const double MEMORIZATION_TURN_FUDGE = 1.0;
 
 // Include path management code
 #include "odometry.h"
@@ -73,7 +73,7 @@ Path path5(200, false);
 Path path6(200, true);
 
 Path *paths[] = {&path1, &path2, &path2, &path3, &path4, &path5, &path6};
-const byte numPaths = 2;
+const byte numPaths = 1;
 byte currentPathId = 0;
 
 Path *currentPath = paths[currentPathId];
