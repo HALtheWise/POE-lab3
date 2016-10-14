@@ -32,7 +32,7 @@ const int LOOP_DURATION = 10; //(ms) This is the inverse of the main loop freque
 const int FORWARD_POWER_INITIAL = 30; // 0...255
 const int TURN_POWER_INITIAL = 30; // 0...255
 
-const float OUTER_TURN_LIMIT = 0.2;
+const float OUTER_TURN_LIMIT = 0.1;
 
 const int POWER_REPLAY = 40; // 0...255
 
@@ -71,10 +71,11 @@ Path path2(100, true);
 Path path3(600, false);
 Path path4(150, true);
 Path path5(200, false);
-Path path6(200, true);
+Path path6(100, true);
+Path path7(100, false);
 
-Path *paths[] = {&path1, &path2, &path3, &path4, &path5, &path6};
-const byte numPaths = 6;
+Path *paths[] = {&path1, &path2, &path3, &path4, &path5, &path6, &path7};
+const byte numPaths = 7;
 byte currentPathId = 0;
 
 Path *currentPath = paths[currentPathId];
