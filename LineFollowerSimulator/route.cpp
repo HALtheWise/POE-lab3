@@ -14,6 +14,8 @@ Route::Route()
 }
 
 void Route::reset(int n){
+    // reinitialize to a route of n points
+
     QVector<QPointF> route;
 
     float x = R_MAX;
@@ -29,12 +31,14 @@ void Route::reset(int n){
 }
 
 void Route::reset(const QVector<QPointF> &route){
+    // reset from vector
     poly = QPolygonF(route);
     poly_item.setPolygon(poly);
     poly_item.setPen(routePen);
 }
 
 void Route::save(const QString& filename){
+    // save route to file
     QFile file(filename);
     if (file.open(QIODevice::ReadWrite)) {
         QTextStream stream(&file);
@@ -47,6 +51,7 @@ void Route::save(const QString& filename){
 }
 
 void Route::load(const QString& filename){
+    // load route from file
     QFile file(filename);
     if(file.open(QIODevice::ReadOnly)) {
         QTextStream stream(&file);

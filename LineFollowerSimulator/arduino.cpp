@@ -2,7 +2,7 @@
 #include <QTime>
 #include <QThread>
 
-_Serial Serial;
+_Serial Serial; // global Serial object to use everywhere else
 
 long long millis(){
     return QTime(0,0,0).msecsTo(QTime::currentTime());

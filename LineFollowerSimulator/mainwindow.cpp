@@ -15,11 +15,6 @@
 
 QImage image(PXL_DIMS,PXL_DIMS,QImage::Format_ARGB32);
 
-//PID pid(10.0,0.0,0.0,-5.0, 5.0); // k_p, k_i, k_d, o_min, o_max
-
-//essentially we have 5 parameters:
-// k_p, k_i, k_d, FORWARD_POWER and TURN_POWER
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     scene(new QGraphicsScene(0,0,PXL_DIMS,PXL_DIMS,this)),
@@ -122,22 +117,6 @@ void MainWindow::timerEvent(QTimerEvent *){
 
     if(auto_control){
         loop();
-
-        /*// autonomy control node goes here
-
-        const int FORWARD_POWER = 40; // 0...255
-        const int TURN_POWER = 40; // 0...255
-
-        float err = robot->ir_val_l - robot->ir_val_r;
-        float turnFactor = err > 0? 1 : -1;
-        //float turnFactor = pid.compute(err);
-        //std::cout << turnFactor << std::endl;
-        int leftPower	= FORWARD_POWER + turnFactor * TURN_POWER;
-        int rightPower	= FORWARD_POWER - turnFactor * TURN_POWER;
-
-        ui->l_pow_slider->setValue(leftPower);
-        ui->r_pow_slider->setValue(rightPower);
-        */
     }
 
     robot->update();
@@ -153,6 +132,7 @@ void MainWindow::setLeftPower(int pow){
 }
 
 void MainWindow::resetPower(){
+    //basically stop the robot
     ui->l_pow_slider->setValue(0);
     ui->r_pow_slider->setValue(0);
     setLeftPower(0);
@@ -175,6 +155,7 @@ void MainWindow::setAuto(bool a){
 
 
 void MainWindow::setSimAccel(double accel){
+    //restart timer with new accelaration
     killTimer(timerId);
     SIMULATION_ACCELARATION = accel;
     timerId = startTimer(DT * 1000 / SIMULATION_ACCELARATION);

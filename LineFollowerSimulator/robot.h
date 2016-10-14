@@ -22,9 +22,9 @@ public:
     QPointF pos; // current position
     float theta; // heading, measured from horz.  radians
 
-    QPointF irOffset;
+    QPointF irOffset; // position of ir from center
 
-    float vel_l, vel_r;
+    float vel_l, vel_r; //left-right velocity of motors
 
     float h; // height of IR sensor, inches
     float fov; //field of view of IR sensor, radians
@@ -36,11 +36,6 @@ public:
     float cr; //cone radius
 
     RobotItem* body;
-
-    //QGraphicsItemGroup* robot;
-    //QGraphicsRectItem *body; //approximation
-    //QGraphicsEllipseItem *ir_l; //approximation
-    //QGraphicsEllipseItem *ir_r; //approximation
 
 public:
     Robot(QGraphicsScene& scene,

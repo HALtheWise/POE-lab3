@@ -1,5 +1,8 @@
 #include "Adafruit_MotorShield.h"
 
+// function definitions for the emulation of the Adafruit Motor Shield V2
+// just to have it interface with the "virtual arduino"
+
 Adafruit_DCMotor::Adafruit_DCMotor(int pin):pin(pin){
 
 }
@@ -47,7 +50,7 @@ Adafruit_MotorShield::~Adafruit_MotorShield(){
 }
 
 void Adafruit_MotorShield::begin(){
-    // empty
+    // don't need to do anything here
 }
 
 Adafruit_DCMotor* Adafruit_MotorShield::getMotor(int id){

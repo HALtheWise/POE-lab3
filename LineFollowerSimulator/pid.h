@@ -1,6 +1,8 @@
 #ifndef PID_H
 #define PID_H
 
+//currently disabled over PID_v1, which is written for the arduino
+
 #ifdef _USE_MY_PID_
 #include "utils.h"
 

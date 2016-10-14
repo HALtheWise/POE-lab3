@@ -26,13 +26,13 @@ Robot::Robot(QGraphicsScene& scene, QPointF pos, float theta, QPointF irOffset, 
     vel_l = vel_r = 0.;
 
     body = new RobotItem(pos,QPointF(ROBOT_LENGTH,ROBOT_WIDTH),irOffset, theta, cr);
+    // RobotItem will take care of graphics
     scene.addItem(body);
 }
 
 Robot::~Robot(){
     if(body){
         delete body;
-
         body = nullptr;
     }
 }
@@ -64,8 +64,7 @@ void Robot::update(){
 
         QPointF ICC = pos + R * QPointF(-sin(theta), -cos(theta));
         // ICC = virtual center of rotation
-
-        //std::cout << ICC << std::endl;
+        // update position based on obtained kinematics prediction
 
         float x = pos.x();
         float y = pos.y();
@@ -126,6 +125,8 @@ void Robot::setIRHeight(float h){
 }
 
 void Robot::sense(QImage& image){
+    // poll a conical section of the ground-plane beneath the IR sensors
+    // and average out the readings of pixels
 
     float l_1 = irOffset.x();
     float l_2 = irOffset.y();
@@ -159,7 +160,6 @@ void Robot::sense(QImage& image){
     }
 
     // set ir values
-
     if(n){
         ir_val_l = sum_l / n;
         ir_val_r = sum_r / n;

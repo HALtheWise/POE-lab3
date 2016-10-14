@@ -1,8 +1,9 @@
 #ifndef ADAFRUIT_MOTORSHIELD_H
 #define ADAFRUIT_MOTORSHIELD_H
 
-#include "utils.h"
+// This class emulates the behavior of the Adafruit Motor Shield V2 for the Arduino.
 
+#include "utils.h"
 #include "arduino.h"
 #include "robot.h"
 

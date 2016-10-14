@@ -1,6 +1,8 @@
 #ifndef ARDUINO_H
 #define ARDUINO_H
 
+// arduino.h essentially enables native arduino code to run seamlessly with the application.
+
 #define BIN (2)
 
 const int A0 = 0xA0;
@@ -17,9 +19,10 @@ class _Serial{
 
 public:
     void begin(int){
-        // ignore
+        // ignore baud rate
     }
 
+    // all prints are redirected to stdout
     template<typename T>
     void print(T val){
         std::cout << val;
@@ -45,10 +48,11 @@ public:
 
 extern _Serial Serial;
 typedef unsigned char byte;
+
+// Arduino APIs
+
 extern long long millis();
-
 extern int analogRead(const int pin);
-
 extern void setup();
 extern void loop();
 extern void delay(int);
