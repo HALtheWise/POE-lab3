@@ -98,6 +98,8 @@ void setup()
 	pid.SetSampleTime(LOOP_DURATION - 2);
 	pid.SetOutputLimits(-1, 1);
 
+	robotPose.reset();
+
 	stop();
 	delay(1000);
 }
