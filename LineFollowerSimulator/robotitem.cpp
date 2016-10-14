@@ -3,7 +3,10 @@
 
 RobotItem::RobotItem(QPointF pos, QPointF dims, QPointF irOffset, float theta, float cr):
 pos(pos),dims(dims),irOffset(irOffset),theta(theta),cr(cr){
-
+    setFlag(QGraphicsItem::ItemIsSelectable);
+    setFlag(QGraphicsItem::ItemIsMovable);
+    setFlag(QGraphicsItem::ItemSendsGeometryChanges);
+    setAcceptDrops(true);
 }
 
 QRectF RobotItem::boundingRect() const{

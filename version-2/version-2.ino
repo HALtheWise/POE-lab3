@@ -84,11 +84,15 @@ int leftPower = 0, rightPower = 0; // range -255...255
 
 Pose robotPose;
 
-Path path1(600, false);
-Path path2(600, true);
+Path path1(50, false); //use r, l,
+Path path2(50, true);
+Path path3(50, false);
+Path path4(50, true);
+Path path5(50, false);
+Path path6(50, true);
 
-Path *paths[] = {&path1, &path2};
-const byte numPaths = 2;
+Path *paths[] = {&path1, &path2, &path2, &path3, &path4, &path5, &path6};
+const byte numPaths = 6;
 
 byte currentPathId = 0;
 
@@ -290,7 +294,8 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
     PathPoint *target = currentPath->getPoint(robotPose.distAlong);
 
     // error is positive if the path is left of the robot
-    double pathError = byte(target->wrappedAngle - byte(robotPose.angleFrom));
+    double pathError = target->wrappedAngle - robotPose.angleFrom;
+
     if(pathError > 127){
         pathError = pathError - 256;
     }

@@ -19,7 +19,7 @@ private:
     // bits represent robot speed 0...7
     byte flags;
 public:
-    byte wrappedAngle;
+    double wrappedAngle;
 
     PathPoint();
     bool getOffLine( void );
