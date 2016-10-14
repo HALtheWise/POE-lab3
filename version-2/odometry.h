@@ -40,6 +40,10 @@ double adjustPower( int power ){
 
 // Update the estimated pose of the robot based on wheel (estimated) odometry.
 void Pose::odometryUpdate( int leftPower, int rightPower, int timestep) {
+	if (timestep > 100)
+	{
+		return;
+	}
 	double turnFudge = (state == STATE_MEMORIZE) ? MEMORIZATION_TURN_FUDGE : 1;
 
 	double leftPowerFrac  = adjustPower(leftPower);
