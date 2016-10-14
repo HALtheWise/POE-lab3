@@ -234,12 +234,12 @@ void memorizeLine(float leftAvg, float rightAvg)
 
 	float offReading = lineOffset(leftAvg, rightAvg, !useLeftSensor);
 
-	if (offReading > 0.5 || robotPose.distAlong > currentPath->allocatedPoints){
+	if ((offReading > 0.5 && robotPose.distAlong > 5) || robotPose.distAlong > currentPath->allocatedPoints){
 		// The robot's off-line sensor has seen a line
 		Serial.println("segment end detected");
 
 		stop();
-		delay(1000);
+		delay(500);
 		robotPose.reset();
 
 		if(currentPathId < numPaths - 1){
@@ -303,7 +303,7 @@ void replayLine(float leftAvg, float rightAvg, int dt) {
 		Serial.println("segment end detected");
 
 		stop();
-		delay(1000);
+		delay(200); // TODO: remove this for final follows
 		robotPose.reset();
 
 		if(currentPathId < numPaths - 1){
